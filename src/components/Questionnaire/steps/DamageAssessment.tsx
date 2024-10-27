@@ -13,7 +13,7 @@ const damageCategories = [
   { key: 'doors', label: 'Doors' },
   { key: 'interior', label: 'Interior' },
   { key: 'chimney', label: 'Chimney' },
-  { key: 'systems', label: 'Plumbing/Electrical/HVAC Systems' },
+  { key: 'systems', label: 'Plumbing/Electrical/\nHVAC Systems' },
   { key: 'landscaping', label: 'Landscaping/Trees' },
   { key: 'other', label: 'Other' },
 ] as const;
@@ -39,28 +39,45 @@ export default function DamageAssessment({ formData, onComplete }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {damageCategories.map(({ key, label }) => (
-        <div key={key}>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            {label}
-          </label>
-          <div className="grid grid-cols-2 gap-4">
-            {damageLevels.map(({ value, label }) => (
-              <label key={value} className="flex items-center p-3 border rounded-lg hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name={key}
-                  value={value}
-                  defaultChecked={formData.damageAssessment[key as keyof typeof formData.damageAssessment] === value}
-                  className="mr-2"
-                  required
-                />
-                <span>{label}</span>
-              </label>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs">
+                Category
+              </th>
+              {damageLevels.map(({ label }) => (
+                <th key={label} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {damageCategories.map(({ key, label }) => (
+              <tr key={key}>
+                <td className="px-6 py-4 whitespace-normal text-sm font-medium text-gray-900 max-w-xs">
+                  {label}
+                </td>
+                {damageLevels.map(({ value }) => (
+                  <td key={value} className="px-6 py-4 whitespace-nowrap">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name={key}
+                        value={value}
+                        defaultChecked={formData.damageAssessment[key as keyof typeof formData.damageAssessment] === value}
+                        className="mr-2"
+                        required
+                      />
+                    </label>
+                  </td>
+                ))}
+              </tr>
             ))}
-          </div>
-        </div>
-      ))}
+          </tbody>
+        </table>
+      </div>
 
       <button
         type="submit"

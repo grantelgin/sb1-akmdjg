@@ -36,6 +36,12 @@ function App() {
     setCurrentStep(prev => prev + 1);
   };
 
+  const handleStepChange = (step: number) => {
+    if (step <= currentStep) {
+      setCurrentStep(step);
+    }
+  };
+
   const handleSubmit = async (data: FormData) => {
     // Here you would typically send the data to your backend
     console.log('Form submitted:', data);
@@ -93,6 +99,7 @@ function App() {
         formData={formData}
         onStepComplete={handleStepComplete}
         onSubmit={handleSubmit}
+        onStepChange={handleStepChange}
       />
     </div>
   );

@@ -15,6 +15,10 @@ export default function DamageDate({ formData, onComplete }: Props) {
     });
   };
 
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.showPicker();
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
@@ -28,6 +32,7 @@ export default function DamageDate({ formData, onComplete }: Props) {
           max={new Date().toISOString().split('T')[0]}
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
           required
+          onFocus={handleFocus}
         />
       </div>
 

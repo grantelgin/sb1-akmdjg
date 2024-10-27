@@ -1,5 +1,5 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, ArrowLeft } from 'lucide-react';
 import StepIndicator from './StepIndicator';
 import PersonalInfo from './steps/PersonalInfo';
 import PropertyAddress from './steps/PropertyAddress';
@@ -8,7 +8,7 @@ import DamageAssessment from './steps/DamageAssessment';
 import ContractorContact from './steps/ContractorContact';
 // import InsuranceClaim from './steps/InsuranceClaim';
 // import InsuranceCarrier from './steps/InsuranceCarrier';
-// import UploadImages from './steps/UploadImages';
+import UploadImages from './steps/UploadImages';
 import { FormData } from './types';
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
   formData: FormData;
   onStepComplete: (data: Partial<FormData>) => void;
   onSubmit: (data: FormData) => void;
+  onStepChange: (step: number) => void; // New prop for changing steps
 }
 
 export default function QuestionnaireModal({
@@ -27,6 +28,7 @@ export default function QuestionnaireModal({
   formData,
   onStepComplete,
   onSubmit,
+  onStepChange, // Destructure the new prop
 }: Props) {
   if (!isOpen) return null;
 
@@ -38,11 +40,22 @@ export default function QuestionnaireModal({
     { title: 'Contractor', component: ContractorContact },
     // { title: 'Insurance', component: InsuranceClaim },
     // { title: 'Carrier', component: InsuranceCarrier },
-    // { title: 'Upload', component: UploadImages },
+    { title: 'Upload', component: UploadImages }
   ];
 
-  const CurrentStepComponent = steps[currentStep].component;
-
+  const isValidStep = currentStep >= 0 && currentStep < steps.length;
+  const CurrentStepComponent = isValidStep ? steps[currentStep].component : null;
+  
+  const handleStepComplete = (data: Partial<FormData>) => {
+    // Only change step if the current step is not the last one
+    if (currentStep < steps.length - 1) {
+      onStepComplete(data);
+      onStepChange(currentStep + 1);
+    } else {
+      onStepComplete(data);
+    }
+  };
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -62,14 +75,28 @@ export default function QuestionnaireModal({
           <StepIndicator
             steps={steps.map((s) => s.title)}
             currentStep={currentStep}
+            onStepClick={onStepChange}
           />
 
           <div className="mt-8">
-            <CurrentStepComponent
-              formData={formData}
-              onComplete={onStepComplete}
-              onSubmit={currentStep === steps.length - 1 ? onSubmit : undefined}
-            />
+            {currentStep > 0 && (
+              <button
+                onClick={() => onStepChange(currentStep - 1)}
+                className="text-gray-500 hover:text-gray-700 mb-4 flex items-center"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </button>
+            )}
+            {CurrentStepComponent ? (
+              <CurrentStepComponent
+                formData={formData}
+                onComplete={handleStepComplete}
+                onSubmit={currentStep === steps.length - 1 ? onSubmit : undefined}
+              />
+            ) : (
+              <p>Error: Invalid step</p>
+            )}
           </div>
         </div>
       </div>

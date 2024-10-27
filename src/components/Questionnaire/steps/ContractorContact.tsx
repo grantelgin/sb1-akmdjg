@@ -55,7 +55,7 @@ export default function ContractorContact({ formData, onComplete }: Props) {
           <input
             type="checkbox"
             name="contactConsent"
-            defaultChecked={formData.contactConsent}
+            defaultChecked={true}
             className="mt-1"
             required
           />
