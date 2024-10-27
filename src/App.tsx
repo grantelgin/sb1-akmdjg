@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { Shield, Home, FileCheck, Clock, CheckCircle } from 'lucide-react';
+import Hero from './components/Hero';
+import Process from './components/Process';
+import Features from './components/Features';
+import CallToAction from './components/CallToAction';
 import QuestionnaireModal from './components/Questionnaire/QuestionnaireModal';
 import { FormData } from './components/Questionnaire/types';
 
@@ -89,8 +93,10 @@ function App() {
         </div>
       </header>
 
-      {/* Rest of the sections remain the same */}
-      {/* ... */}
+      <Hero onStartAssessment={() => setIsQuestionnaireOpen(true)} />
+      <Process />
+      <Features />
+      <CallToAction onStartAssessment={() => setIsQuestionnaireOpen(true)} />
 
       <QuestionnaireModal
         isOpen={isQuestionnaireOpen}
