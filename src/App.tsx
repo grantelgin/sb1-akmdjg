@@ -5,6 +5,7 @@ import Process from './components/Process';
 import Features from './components/Features';
 import CallToAction from './components/CallToAction';
 import QuestionnaireModal from './components/Questionnaire/QuestionnaireModal';
+import DamageAssessmentReport from './components/report/damageAssessmentReport';
 import { FormData } from './components/Questionnaire/types';
 
 const initialFormData: FormData = {
@@ -28,12 +29,14 @@ const initialFormData: FormData = {
   contactConsent: false,
   insuranceClaim: false,
   images: [],
+  receipts: [],
 };
 
 function App() {
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [reportData, setReportData] = useState<FormData | null>(null);
 
   const handleStepComplete = (data: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...data }));
@@ -49,6 +52,7 @@ function App() {
   const handleSubmit = async (data: FormData) => {
     // Here you would typically send the data to your backend
     console.log('Form submitted:', data);
+    setReportData(data);
     setIsQuestionnaireOpen(false);
     setCurrentStep(0);
     setFormData(initialFormData);
@@ -107,6 +111,8 @@ function App() {
         onSubmit={handleSubmit}
         onStepChange={handleStepChange}
       />
+
+      {reportData && <DamageAssessmentReport reportData={reportData} />}
     </div>
   );
 }
