@@ -36,7 +36,8 @@ export default function UploadImages({ formData, onComplete }: Props) {
   });
 
   const handleSubmit = () => {
-    onComplete({ images: imagePreviews });
+    console.log('Submitting:', { images: imagePreviews, receipts: receiptPreviews });
+    onComplete({ images: imagePreviews, receipts: receiptPreviews });
   };
 
   return (

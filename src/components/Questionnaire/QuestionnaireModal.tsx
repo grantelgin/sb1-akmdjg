@@ -47,12 +47,13 @@ export default function QuestionnaireModal({
   const CurrentStepComponent = isValidStep ? steps[currentStep].component : null;
   
   const handleStepComplete = (data: Partial<FormData>) => {
-    // Only change step if the current step is not the last one
+    onStepComplete(data);
     if (currentStep < steps.length - 1) {
-      onStepComplete(data);
       onStepChange(currentStep + 1);
     } else {
-      onStepComplete(data);
+      // If it's the last step, call onSubmit and close the modal
+      onSubmit({ ...formData, ...data });
+      onClose();
     }
   };
   
@@ -92,7 +93,6 @@ export default function QuestionnaireModal({
               <CurrentStepComponent
                 formData={formData}
                 onComplete={handleStepComplete}
-                onSubmit={currentStep === steps.length - 1 ? onSubmit : undefined}
               />
             ) : (
               <p>Error: Invalid step</p>
