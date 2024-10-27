@@ -16,19 +16,17 @@ export default function UploadImages({ formData, onComplete }: Props) {
       preview: URL.createObjectURL(file)
     }));
     setImagePreviews((prev) => [...prev, ...newImages.map(file => file.preview)]);
-    onComplete({ images: [...formData.images, ...newImages] });
-  }, [onComplete, formData.images]);
+  }, []);
 
   const onDropReceipts = useCallback((acceptedFiles: File[]) => {
     const newReceipts = acceptedFiles.map((file) => Object.assign(file, {
       preview: URL.createObjectURL(file)
     }));
     setReceiptPreviews((prev) => [...prev, ...newReceipts.map(file => file.preview)]);
-    onComplete({ receipts: [...(formData.receipts || []), ...newReceipts] });
-  }, [onComplete, formData.receipts]);
+  }, []);
 
   const { getRootProps: getRootPropsImages, getInputProps: getInputPropsImages } = useDropzone({
-    accept: { 'image/*': [], 'application/pdf': [] },
+    accept: { 'image/*': [] },
     onDrop: onDropImages
   });
 
@@ -36,6 +34,10 @@ export default function UploadImages({ formData, onComplete }: Props) {
     accept: { 'image/*': [], 'application/pdf': [] },
     onDrop: onDropReceipts
   });
+
+  const handleSubmit = () => {
+    onComplete({ images: imagePreviews });
+  };
 
   return (
     <div className="space-y-6">
@@ -65,11 +67,11 @@ export default function UploadImages({ formData, onComplete }: Props) {
         </div>
       </div>
 
-      <button
-        onClick={() => onComplete({})}
-        className="w-full bg-blue-500 text-white py-3 rounded-md hover:bg-blue-600 transition-colors"
+      <button 
+        onClick={handleSubmit} 
+        className="mt-6 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
       >
-        Continue
+        Submit
       </button>
     </div>
   );
