@@ -133,7 +133,7 @@ function DamageAssessmentReport() {
                   <div>
                     <p className="text-sm text-gray-500 capitalize">{key}</p>
                     <p className={`font-medium capitalize ${getSeverityColor(severity)}`}>
-                      {severity} damage
+                    {severity === "none" ? "No" : severity} damage                    
                     </p>
                   </div>
                 </div>
