@@ -35,6 +35,14 @@ export default function UploadImages({ formData, onComplete }: Props) {
     onDrop: onDropReceipts
   });
 
+  const handleRemoveImage = (index: number) => {
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveReceipt = (index: number) => {
+    setReceiptPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = () => {
     console.log('Submitting:', { images: imagePreviews, receipts: receiptPreviews });
     onComplete({ images: imagePreviews, receipts: receiptPreviews });
@@ -50,7 +58,15 @@ export default function UploadImages({ formData, onComplete }: Props) {
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {imagePreviews.map((preview, index) => (
-            <img key={index} src={preview} alt="Preview" className="w-24 h-24 object-cover rounded-md" />
+            <div key={index} className="relative">
+              <img src={preview} alt="Preview" className="w-24 h-24 object-cover rounded-md" />
+              <button 
+                onClick={() => handleRemoveImage(index)} 
+                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+              >
+                &times;
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -63,7 +79,15 @@ export default function UploadImages({ formData, onComplete }: Props) {
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {receiptPreviews.map((preview, index) => (
-            <img key={index} src={preview} alt="Preview" className="w-24 h-24 object-cover rounded-md" />
+            <div key={index} className="relative">
+              <img src={preview} alt="Preview" className="w-24 h-24 object-cover rounded-md" />
+              <button 
+                onClick={() => handleRemoveReceipt(index)} 
+                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+              >
+                &times;
+              </button>
+            </div>
           ))}
         </div>
       </div>
