@@ -15,15 +15,6 @@ export default function Hero({ onStartAssessment }: HeroProps) {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-2">
-              <Home className="w-8 h-8" />
-              <span className="text-xl font-bold">Restoration Response Network</span>
-            </div>
-            <button className="bg-white/10 backdrop-blur-md hover:bg-white/20 px-6 py-2 rounded-full font-semibold transition-all">
-              Emergency Contact
-            </button>
-          </nav>
           
           <div className="text-center max-w-3xl mx-auto py-24">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Home, FileCheck, Clock, CheckCircle } from 'lucide-react';
+import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import Process from './components/Process';
 import Features from './components/Features';
@@ -7,6 +8,7 @@ import CallToAction from './components/CallToAction';
 import QuestionnaireModal from './components/Questionnaire/QuestionnaireModal';
 import DamageAssessmentReport from './components/report/damageAssessmentReport';
 import { FormData } from './components/Questionnaire/types';
+import StormReportsTest from './components/StormReportsTest';
 
 const initialFormData: FormData = {
   propertyType: 'home',
@@ -58,10 +60,10 @@ function App() {
     setFormData(initialFormData);
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-
-      <Hero onStartAssessment={() => setIsQuestionnaireOpen(true)} />
+    return (
+      <div className="min-h-screen bg-white">
+        <Navigation />
+        <Hero onStartAssessment={() => setIsQuestionnaireOpen(true)} />
       <Process />
       <Features />
       <CallToAction onStartAssessment={() => setIsQuestionnaireOpen(true)} />
@@ -77,6 +79,7 @@ function App() {
       />
 
       {reportData && <DamageAssessmentReport reportData={reportData} />}
+      <StormReportsTest />
     </div>
   );
 }
