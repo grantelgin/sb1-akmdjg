@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, Menu, X, Home, Building2, Users, Info } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface NavItem {
   label: string;
@@ -12,7 +13,7 @@ const navItems: NavItem[] = [
   {
     label: 'Home',
     href: '/',
-    icon: <Home className="w-5 h-5" />,
+    icon: <Home className="w-5 h-5" />
   },
   {
     label: 'Homeowners',
@@ -42,7 +43,7 @@ const navItems: NavItem[] = [
     href: '#',
     icon: <Info className="w-5 h-5" />,
     subItems: [
-      { label: 'FAQ', href: '/about/faq' },
+      { label: 'FAQ', href: '/faq' },
       { label: 'Careers', href: '/about/careers' },
       { label: 'Contact', href: '/about/contact' },
     ],
@@ -92,14 +93,14 @@ export default function Navigation() {
                     <div className="absolute z-10 top-full left-0 w-56 mt-1 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
                       <div className="py-1" role="menu">
                         {item.subItems.map((subItem) => (
-                          <a
+                          <Link
                             key={subItem.label}
-                            href={subItem.href}
+                            to={subItem.href}
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             role="menuitem"
                           >
                             {subItem.label}
-                          </a>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -150,13 +151,13 @@ export default function Navigation() {
               {item.subItems && mobileOpenDropdown === item.label && (
                 <div className="bg-gray-50">
                   {item.subItems.map((subItem) => (
-                    <a
+                    <Link
                       key={subItem.label}
-                      href={subItem.href}
+                      to={subItem.href}
                       className="block pl-12 pr-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                     >
                       {subItem.label}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               )}
