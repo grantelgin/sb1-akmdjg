@@ -67,6 +67,8 @@ function DamageAssessmentReport() {
   useEffect(() => {
     const fetchReportData = async () => {
       const data = await getReportData(reportId);
+      console.log('Report data in component:', data);
+      console.log('Storm reports in component:', data.stormReports);
       setReportData(data);
     };
     fetchReportData();
@@ -169,6 +171,76 @@ function DamageAssessmentReport() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Documentation Section */}
+          <div className="px-6 py-6 border-t">
+            <div className="flex items-center space-x-3 mb-4">
+              <FileText className="w-5 h-5 text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-900">Documentation</h2>
+            </div>
+
+            {/* Images */}
+            {reportData.images.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Damage Images</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {reportData.images.map((imageUrl, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={imageUrl}
+                        alt={`Damage image ${index + 1}`}
+                        className="w-full h-48 object-cover rounded-lg shadow-sm"
+                      />
+                      <a
+                        href={imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center"
+                      >
+                        <span className="text-white">View Full Size</span>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Receipts */}
+            {reportData.receipts.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Receipts</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {reportData.receipts.map((receiptUrl, index) => (
+                    <div key={index} className="relative group">
+                      {receiptUrl.toLowerCase().endsWith('.pdf') ? (
+                        <div className="w-full h-48 bg-gray-100 rounded-lg shadow-sm flex items-center justify-center">
+                          <FileText className="w-12 h-12 text-gray-400" />
+                        </div>
+                      ) : (
+                        <img
+                          src={receiptUrl}
+                          alt={`Receipt ${index + 1}`}
+                          className="w-full h-48 object-cover rounded-lg shadow-sm"
+                        />
+                      )}
+                      <a
+                        href={receiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center"
+                      >
+                        <span className="text-white">View Receipt</span>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {reportData.images.length === 0 && reportData.receipts.length === 0 && (
+              <p className="text-gray-500">No documentation attached to this report.</p>
+            )}
           </div>
         </div>
         

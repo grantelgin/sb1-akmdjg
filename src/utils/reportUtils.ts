@@ -47,6 +47,16 @@ export async function storeReportData(reportData: any): Promise<void> {
     const reportId = reportData.reportId;
     const timestamp = new Date().toISOString();
 
+    // Ensure storm reports are properly formatted for JSON storage
+    const formattedStormReports = reportData.stormReports.map((report: any) => ({
+      type: report.type,
+      date: report.date,
+      lat: report.lat,
+      lon: report.lon,
+      distance: report.distance,
+      description: report.description
+    }));
+
     // Upload images to Supabase Storage
     const imageUrls = await Promise.all(
       reportData.images.map(async (image: File) => {
@@ -100,11 +110,14 @@ export async function storeReportData(reportData: any): Promise<void> {
         contact_consent: reportData.contactConsent,
         image_urls: imageUrls,
         receipt_urls: receiptUrls,
-        storm_reports: reportData.stormReports,
+        storm_reports: formattedStormReports,
         created_at: timestamp
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase storage error:', error);
+      throw error;
+    }
   } catch (error) {
     console.error('Error storing report data:', error);
     throw error;
@@ -126,6 +139,9 @@ export async function getReportData(reportId: string): Promise<any> {
     if (error) throw error;
     if (!data) throw new Error('Report not found');
 
+    console.log('Raw data from Supabase:', data);
+    console.log('Storm reports:', data.storm_reports);
+
     return {
       reportId: data.report_id,
       propertyType: data.property_type,
@@ -139,7 +155,7 @@ export async function getReportData(reportId: string): Promise<any> {
       contactConsent: data.contact_consent,
       images: data.image_urls,
       receipts: data.receipt_urls,
-      stormReports: data.storm_reports,
+      stormReports: data.storm_reports || [],
       createdAt: data.created_at
     };
   } catch (error) {

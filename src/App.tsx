@@ -63,11 +63,17 @@ function App() {
 
       // Get storm reports for the area
       const coords = await getCoordinatesFromAddress(data.address);
+      console.log('Coordinates:', coords);
+      
+      const date = new Date(data.damageDate);
+      console.log('Date for storm reports:', date);
+      
       const stormReports = await StormReportService.getStormReports(
-        data.damageDate,
+        date,
         coords.lat,
         coords.lon
       );
+      console.log('Storm reports from service:', stormReports);
 
       // Store report data with storm reports
       const reportData = {
@@ -75,6 +81,7 @@ function App() {
         stormReports,
         reportId
       };
+      console.log('Report data being stored:', reportData);
 
       // Store report data in Supabase
       await storeReportData(reportData);

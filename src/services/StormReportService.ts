@@ -2,7 +2,7 @@ import axios from 'axios';
 import { StormReport } from '../types/StormReport';
 
 export class StormReportService {
-  private static readonly BASE_URL = '/storm_reports';
+  private static readonly BASE_URL = 'https://www.spc.noaa.gov/climo/reports';
   private static readonly MAX_DISTANCE_MILES = 100;
   private static readonly DAYS_RANGE = 7;
 
@@ -20,12 +20,16 @@ export class StormReportService {
 
       for (const currentDate of dateRange) {
         const formattedDate = this.formatDate(currentDate);
-        console.log('Checking date:', formattedDate);
+        const url = `${this.BASE_URL}/${formattedDate}_rpts.csv`;
+        console.log('Fetching from URL:', url);
 
         try {
-          const response = await axios.get(`${this.BASE_URL}/${formattedDate}_rpts.csv`, {
+          const response = await axios.get(url, {
             responseType: 'text'
           });
+
+          console.log('Response status:', response.status);
+          console.log('Response data preview:', response.data.substring(0, 200));
 
           const parsedReports = this.parseCSV(response.data);
           console.log(`Found ${parsedReports.length} reports for ${formattedDate}`);
@@ -35,12 +39,9 @@ export class StormReportService {
 
           reports.push(...filteredReports);
         } catch (err) {
-          console.log(`No reports found for ${formattedDate}`);
+          console.error(`Error fetching reports for ${formattedDate}:`, err);
         }
       }
-
-      // Sort reports by distance
-      reports.sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
       console.log('Total reports found:', reports.length);
       return reports;
@@ -61,43 +62,66 @@ export class StormReportService {
   }
 
   private static formatDate(date: Date): string {
-    return date.toLocaleDateString('en-US', {
-      year: '2-digit',
-      month: '2-digit',
-      day: '2-digit'
-    }).replace(/\//g, '');
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}${month}${day}`;
   }
 
   private static parseCSV(csvData: string): StormReport[] {
-    // Split into sections (tornado, wind, hail)
-    const sections = csvData.split(/(?=.*F_Scale|.*Speed|.*Size)/);
+    // Split the CSV data into lines
+    const lines = csvData.trim().split('\n');
     const reports: StormReport[] = [];
+    let currentHeaders: string[] = [];
 
-    sections.forEach(section => {
-      if (!section.trim()) return;
-
-      const lines = section.trim().split('\n');
-      const headers = lines[0].split(',');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
       
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',');
-        const report = this.createReportFromLine(headers, values);
+      // Skip empty lines
+      if (!line) continue;
+
+      // If this is a header line, update current headers
+      if (line.startsWith('Time,')) {
+        currentHeaders = line.split(',');
+        continue;
+      }
+
+      // Process data lines
+      const values = line.split(',');
+      if (values.length === currentHeaders.length) {
+        const report = this.createReportFromLine(currentHeaders, values);
         if (report) reports.push(report);
       }
-    });
+    }
 
     return reports;
   }
 
   private static createReportFromLine(headers: string[], values: string[]): StormReport | null {
     try {
+      // Get the current date from the CSV filename (it's in the format YYMMDD)
+      const dateStr = headers[0].split('_')[0];
+      const year = '20' + dateStr.substring(0, 2);
+      const month = dateStr.substring(2, 4);
+      const day = dateStr.substring(4, 6);
+      const time = values[headers.indexOf('Time')];
+      
+      // Combine date and time
+      const date = `${year}-${month}-${day}T${time.padStart(4, '0')}:00Z`;
+
       const report: Partial<StormReport> = {
         type: this.determineReportType(headers),
-        date: values[headers.indexOf('Date')],
+        date: date,
         lat: parseFloat(values[headers.indexOf('Lat')]),
         lon: parseFloat(values[headers.indexOf('Lon')]),
         description: values[headers.indexOf('Comments')] || ''
       };
+
+      // Validate coordinates
+      if (isNaN(report.lat) || isNaN(report.lon)) {
+        console.log('Invalid coordinates:', values);
+        return null;
+      }
 
       return report as StormReport;
     } catch (error) {
@@ -113,30 +137,26 @@ export class StormReportService {
     return 'TORNADO'; // default
   }
 
-  private static filterByDistance(reports: StormReport[], userLat: number, userLon: number): StormReport[] {
-    return reports.filter(report => {
-      const distance = this.calculateDistance(userLat, userLon, report.lat, report.lon);
-      if (distance <= this.MAX_DISTANCE_MILES) {
-        report.distance = distance;
-        return true;
-      }
-      return false;
-    });
+  private static filterByDistance(reports: StormReport[], targetLat: number, targetLon: number): StormReport[] {
+    return reports.map(report => ({
+      ...report,
+      distance: this.calculateDistance(targetLat, targetLon, report.lat, report.lon)
+    })).filter(report => report.distance <= this.MAX_DISTANCE_MILES);
   }
 
   private static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 3959; // Earth's radius in miles
-    const dLat = this.toRad(lat2 - lat1);
-    const dLon = this.toRad(lon2 - lon1);
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
     const a = 
       Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) * 
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
       Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   }
 
-  private static toRad(degrees: number): number {
-    return degrees * Math.PI / 180;
+  private static deg2rad(deg: number): number {
+    return deg * (Math.PI/180);
   }
 } 
