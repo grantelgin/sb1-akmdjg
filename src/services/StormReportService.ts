@@ -3,11 +3,12 @@ import { StormReport } from '../types/StormReport';
 
 export class StormReportService {
   private static readonly BASE_URL = '/storm_reports';
-  private static readonly MAX_DISTANCE_MILES = 150000;
+  private static readonly MAX_DISTANCE_MILES = 100;
   private static readonly DAYS_RANGE = 7;
 
-  static async getStormReports(date: Date, lat: number, lon: number): Promise<StormReport[]> {
+  static async getStormReports(dateStr: string, lat: number, lon: number): Promise<StormReport[]> {
     try {
+      const date = new Date(dateStr);
       console.log('Fetching reports for:', {
         date: date.toISOString(),
         lat,
@@ -30,13 +31,16 @@ export class StormReportService {
           console.log(`Found ${parsedReports.length} reports for ${formattedDate}`);
 
           const filteredReports = this.filterByDistance(parsedReports, lat, lon);
-          console.log(`${filteredReports.length} reports within distance limit`);
+          console.log(`${filteredReports.length} reports within ${this.MAX_DISTANCE_MILES} miles`);
 
           reports.push(...filteredReports);
         } catch (err) {
           console.log(`No reports found for ${formattedDate}`);
         }
       }
+
+      // Sort reports by distance
+      reports.sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
       console.log('Total reports found:', reports.length);
       return reports;

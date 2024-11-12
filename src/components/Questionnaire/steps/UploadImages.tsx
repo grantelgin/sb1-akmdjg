@@ -8,10 +8,13 @@ interface Props {
 }
 
 export default function UploadImages({ formData, onComplete }: Props) {
+  const [images, setImages] = useState<File[]>([]);
+  const [receipts, setReceipts] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [receiptPreviews, setReceiptPreviews] = useState<string[]>([]);
 
   const onDropImages = useCallback((acceptedFiles: File[]) => {
+    setImages(prev => [...prev, ...acceptedFiles]);
     const newImages = acceptedFiles.map((file) => Object.assign(file, {
       preview: URL.createObjectURL(file)
     }));
@@ -19,6 +22,7 @@ export default function UploadImages({ formData, onComplete }: Props) {
   }, []);
 
   const onDropReceipts = useCallback((acceptedFiles: File[]) => {
+    setReceipts(prev => [...prev, ...acceptedFiles]);
     const newReceipts = acceptedFiles.map((file) => Object.assign(file, {
       preview: URL.createObjectURL(file)
     }));
@@ -36,16 +40,20 @@ export default function UploadImages({ formData, onComplete }: Props) {
   });
 
   const handleRemoveImage = (index: number) => {
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleRemoveReceipt = (index: number) => {
-    setReceiptPreviews((prev) => prev.filter((_, i) => i !== index));
+    setReceipts(prev => prev.filter((_, i) => i !== index));
+    setReceiptPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
-    console.log('Submitting:', { images: imagePreviews, receipts: receiptPreviews });
-    onComplete({ images: imagePreviews, receipts: receiptPreviews });
+    onComplete({ 
+      images: images,  // Pass the actual File objects
+      receipts: receipts  // Pass the actual File objects
+    });
   };
 
   return (

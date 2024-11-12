@@ -6,11 +6,14 @@ import Process from './components/Process';
 import Features from './components/Features';
 import CallToAction from './components/CallToAction';
 import QuestionnaireModal from './components/Questionnaire/QuestionnaireModal';
-import DamageAssessmentReport from './components/report/damageAssessmentReport';
 import { FormData } from './components/Questionnaire/types';
 import StormReportsTest from './components/StormReportsTest';
 import FAQ from './components/FAQ';
-import { Routes, Route } from 'react-router-dom';
+import { generateReportId, getCoordinatesFromAddress, storeReportData } from './utils/reportUtils';
+import { StormReportService } from './services/StormReportService';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import SupabaseTest from './components/SupabaseTest';
+import DamageAssessmentReport from './components/report/damageAssessmentReport';
 
 const initialFormData: FormData = {
   propertyType: 'home',
@@ -33,10 +36,11 @@ const initialFormData: FormData = {
   contactConsent: false,
   insuranceClaim: false,
   images: [],
-  receipts: [],
+  receipts: []
 };
 
 function App() {
+  const navigate = useNavigate();
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -55,11 +59,34 @@ function App() {
 
   const handleSubmit = async (data: FormData) => {
     try {
-      await saveFormDataToSheet(data);
-      setReportData(data);
+      const reportId = generateReportId();
+
+      // Get storm reports for the area
+      const coords = await getCoordinatesFromAddress(data.address);
+      const stormReports = await StormReportService.getStormReports(
+        data.damageDate,
+        coords.lat,
+        coords.lon
+      );
+
+      // Store report data with storm reports
+      const reportData = {
+        ...data,
+        stormReports,
+        reportId
+      };
+
+      // Store report data in Supabase
+      await storeReportData(reportData);
+
+      // Navigate to report page
+      navigate(`/report/${reportData.reportId}`);
+
+      // Reset form
       setIsQuestionnaireOpen(false);
       setCurrentStep(0);
       setFormData(initialFormData);
+
     } catch (error) {
       console.error('Error submitting form:', error);
       // Add error handling UI here
@@ -79,6 +106,9 @@ function App() {
             </>
           } />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/report/:reportId" element={<DamageAssessmentReport />} />
+          <Route path="/supabase-test" element={<SupabaseTest />} />
+          <Route path="/stormreport-test" element={<StormReportsTest />} />
         </Routes>
 
         <QuestionnaireModal
@@ -90,9 +120,6 @@ function App() {
           onSubmit={handleSubmit}
           onStepChange={handleStepChange}
         />
-
-        {reportData && <DamageAssessmentReport reportData={reportData} />}
-        <StormReportsTest />
       </div>
     );
 }

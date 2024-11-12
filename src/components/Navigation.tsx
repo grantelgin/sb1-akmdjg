@@ -11,11 +11,6 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    label: 'Home',
-    href: '/',
-    icon: <Home className="w-5 h-5" />
-  },
-  {
     label: 'Homeowners',
     href: '#',
     icon: <Home className="w-5 h-5" />,
@@ -69,10 +64,10 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex">
             {/* Logo */}
-            <div className="flex-shrink-0 flex items-center">
+            <Link to="/" className="flex-shrink-0 flex items-center">
               <Home className="h-8 w-8 text-blue-600" />
               <span className="ml-2 text-xl font-bold text-gray-900">Restoration Response Network</span>
-            </div>
+            </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -167,4 +162,4 @@ export default function Navigation() {
       </div>
     </nav>
   );
-} 
+}

@@ -1,5 +1,9 @@
 import React from 'react';
-import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCircle, Cloud } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getReportData } from '../../utils/reportUtils';
+import { StormReport } from '../../types/StormReport';
 
 // Types for our damage assessment
 type DamageSeverity = 'none' | 'minor' | 'moderate' | 'severe';
@@ -24,6 +28,8 @@ interface ReportData {
   images: string[];
   receipts: string[];
   contactConsent: boolean;
+  stormReports: StormReport[]; // Add this line
+  reportId: string; // Add this line
 }
 
 const getSeverityColor = (severity: DamageSeverity) => {
@@ -52,27 +58,23 @@ const getSeverityIcon = (severity: DamageSeverity) => {
   }
 };
 
+const MAX_DISTANCE_MILES = 100; // Match with StormReportService
+
 function DamageAssessmentReport() {
-  // Example data (replace with your actual data)
-  const reportData: ReportData = {
-    propertyType: 'home',
-    firstName: 'g',
-    lastName: 'g',
-    email: 'g@g.co',
-    address: '27r East Street, Topsfield, Massachusetts 01983, United States',
-    damageDate: '2024-10-02',
-    damageAssessment: {
-      roof: 'moderate',
-      exteriorWalls: 'severe',
-      windows: 'none',
-      doors: 'none',
-      interior: 'none'
-    },
-    insuranceClaim: false,
-    images: ['blob:http://localhost:5173/2f71a4b7-03c8-4721-b73e-c5775b9e9038'],
-    receipts: ['blob:http://localhost:5173/2ab594ec-d9f6-4e10-905b-0d4ec44f2c6d'],
-    contactConsent: true
-  };
+  const { reportId } = useParams();
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+
+  useEffect(() => {
+    const fetchReportData = async () => {
+      const data = await getReportData(reportId);
+      setReportData(data);
+    };
+    fetchReportData();
+  }, [reportId]);
+
+  if (!reportData) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -169,6 +171,62 @@ function DamageAssessmentReport() {
             </div>
           </div>
         </div>
+        
+{/* Storm Reports Section */}
+<div className="px-6 py-6 border-t">
+  <div className="flex items-center space-x-3 mb-4">
+    <Cloud className="w-5 h-5 text-blue-600" />
+    <h2 className="text-xl font-semibold text-gray-900">Nearby Storm Reports</h2>
+  </div>
+  
+  {reportData.stormReports.length > 0 ? (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500">
+        Found {reportData.stormReports.length} storm reports within {MAX_DISTANCE_MILES} miles 
+        of your location around the date of damage.
+      </p>
+      
+      <div className="grid gap-4">
+        {reportData.stormReports.map((report, index) => (
+          <div key={index} className="bg-gray-50 rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-gray-600">Type:</span>{' '}
+                <span className="font-medium">{report.type}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Distance:</span>{' '}
+                <span className="font-medium">{report.distance.toFixed(1)} miles away</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Date:</span>{' '}
+                <span className="font-medium">
+                  {new Date(report.date).toLocaleDateString()}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Location:</span>{' '}
+                <span className="font-medium">
+                  {report.lat.toFixed(4)}, {report.lon.toFixed(4)}
+                </span>
+              </div>
+            </div>
+            {report.description && (
+              <div className="mt-2">
+                <span className="text-gray-600">Description:</span>{' '}
+                <span className="font-medium">{report.description}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : (
+    <p className="text-gray-500">
+      No storm reports found in your area for the specified date range.
+    </p>
+  )}
+</div>
 
         {/* Footer */}
         <div className="mt-4 text-center text-sm text-gray-500">
