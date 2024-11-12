@@ -31,7 +31,7 @@ export class StormReportService {
           console.log('Response status:', response.status);
           console.log('Response data preview:', response.data.substring(0, 200));
 
-          const parsedReports = this.parseCSV(response.data);
+          const parsedReports = this.parseCSV(response.data, formattedDate);
           console.log(`Found ${parsedReports.length} reports for ${formattedDate}`);
 
           const filteredReports = this.filterByDistance(parsedReports, lat, lon);
@@ -68,7 +68,7 @@ export class StormReportService {
     return `${year}${month}${day}`;
   }
 
-  private static parseCSV(csvData: string): StormReport[] {
+  private static parseCSV(csvData: string, urlDate: string): StormReport[] {
     // Split the CSV data into lines
     const lines = csvData.trim().split('\n');
     const reports: StormReport[] = [];
@@ -89,7 +89,7 @@ export class StormReportService {
       // Process data lines
       const values = line.split(',');
       if (values.length === currentHeaders.length) {
-        const report = this.createReportFromLine(currentHeaders, values);
+        const report = this.createReportFromLine(currentHeaders, values, urlDate);
         if (report) reports.push(report);
       }
     }
@@ -97,13 +97,12 @@ export class StormReportService {
     return reports;
   }
 
-  private static createReportFromLine(headers: string[], values: string[]): StormReport | null {
+  private static createReportFromLine(headers: string[], values: string[], urlDate: string): StormReport | null {
     try {
-      // Get the current date from the CSV filename (it's in the format YYMMDD)
-      const dateStr = headers[0].split('_')[0];
-      const year = '20' + dateStr.substring(0, 2);
-      const month = dateStr.substring(2, 4);
-      const day = dateStr.substring(4, 6);
+      // Get date components from URL date (format: YYMMDD)
+      const year = '20' + urlDate.substring(0, 2);
+      const month = urlDate.substring(2, 4);
+      const day = urlDate.substring(4, 6);
       const time = values[headers.indexOf('Time')];
       
       // Combine date and time
