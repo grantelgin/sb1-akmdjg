@@ -4,6 +4,7 @@ import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCir
 import { useState, useEffect } from 'react';
 import { getReportData } from '../../utils/reportUtils';
 import { StormReport } from '../../types/StormReport';
+import { StormReportsMap } from '../StormReportsMap';
 
 // Types for our damage assessment
 type DamageSeverity = 'none' | 'minor' | 'moderate' | 'severe';
@@ -257,7 +258,16 @@ function DamageAssessmentReport() {
         Found {reportData.stormReports.length} storm reports within {MAX_DISTANCE_MILES} miles 
         of your location around the date of damage.
       </p>
-      
+              {/* Map Section */}
+              <div className="mt-6">
+          <StormReportsMap
+            userLocation={{
+              lat: parseFloat(reportData.stormReports[0]?.lat.toString() || "0"),
+              lon: parseFloat(reportData.stormReports[0]?.lon.toString() || "0")
+            }}
+            stormReports={reportData.stormReports}
+          />
+        </div>
       <div className="grid gap-4">
         {reportData.stormReports.map((report, index) => (
           <div key={index} className="bg-gray-50 rounded-lg p-4">
