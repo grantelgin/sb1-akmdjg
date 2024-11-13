@@ -17,6 +17,7 @@ import DamageAssessmentReport from './components/report/damageAssessmentReport';
 import { NotificationService } from './services/NotificationService';
 import NotificationsTest from './components/NotificationsTest';
 import RestoProfessionals from './components/RestoProfessionals';
+import Careers from './components/Careers';
 
 const initialFormData: FormData = {
   propertyType: 'home',
@@ -123,6 +124,7 @@ function App() {
           <Route path="/supabase-test" element={<SupabaseTest />} />
           <Route path="/stormreport-test" element={<StormReportsTest />} />
           <Route path="/professionals" element={<RestoProfessionals />} />
+          <Route path="/careers" element={<Careers />} />
           <Route path="/test/notifications" element={<NotificationsTest />} />
         </Routes>
 

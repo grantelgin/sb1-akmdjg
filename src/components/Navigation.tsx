@@ -12,26 +12,18 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     label: 'Homeowners',
-    href: '#',
-    icon: <Home className="w-5 h-5" />,
-    subItems: [
-      { label: 'Damage Assessment', href: '/homeowners/damage-assessment' },
-      { label: 'Storm Reports', href: '/homeowners/storm-reports' },
-    ],
+    href: '/',
+    icon: <Home className="w-5 h-5" />
   },
   {
     label: 'Business Owners',
-    href: '#',
-    icon: <Building2 className="w-5 h-5" />,
-    subItems: [
-      { label: 'Damage Assessment', href: '/business/damage-assessment' },
-      { label: 'Storm Reports', href: '/business/storm-reports' },
-    ],
+    href: '/',
+    icon: <Building2 className="w-5 h-5" />
   },
   {
     label: 'Restoration Professionals',
     href: '/professionals',
-    icon: <Users className="w-5 h-5" />,
+    icon: <Users className="w-5 h-5" />
   },
   {
     label: 'About RRN',
@@ -39,7 +31,7 @@ const navItems: NavItem[] = [
     icon: <Info className="w-5 h-5" />,
     subItems: [
       { label: 'FAQ', href: '/faq' },
-      { label: 'Careers', href: '/about/careers' },
+      { label: 'Careers', href: '/careers' },
       { label: 'Contact', href: '/about/contact' },
     ],
   },
