@@ -3,8 +3,36 @@ import { Shield, Users, Handshake, Building, DollarSign, Network } from 'lucide-
 import ContractorForm from './ContractorQuestionnaire/ContractorForm';
 
 export default function RestoProfessionals() {
-  const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
-
+    const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
+    const [email, setEmail] = useState('');
+    const [emailError, setEmailError] = useState('');
+  
+    const validateEmail = (email: string) => {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    };
+  
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEmail(e.target.value);
+      setEmailError('');
+    };
+  
+    const handleSubscribe = (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      if (!email) {
+        setEmailError('Email is required');
+        return;
+      }
+      
+      if (!validateEmail(email)) {
+        setEmailError('Please enter a valid email address');
+        return;
+      }
+  
+      // Redirect to beehiiv subscription link
+      window.location.href = `https://magic.beehiiv.com/v1/a5911a52-870d-4579-b443-aeed1e36b822?email=${encodeURIComponent(email)}`;
+    };
   const benefits = [
     {
       icon: <Users className="w-12 h-12 text-blue-600" />,
@@ -96,13 +124,20 @@ export default function RestoProfessionals() {
               </p>
             </div>
             
-            <form className="space-y-4">
+            <form onSubmit={handleSubscribe} className="space-y-4">
               <div>
                 <input
                   type="email"
+                  value={email}
+                  onChange={handleEmailChange}
                   placeholder="Enter your email"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    emailError ? 'border-red-500' : 'border-gray-300'
+                  } focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                 />
+                {emailError && (
+                  <p className="mt-1 text-sm text-red-500">{emailError}</p>
+                )}
               </div>
               <button
                 type="submit"

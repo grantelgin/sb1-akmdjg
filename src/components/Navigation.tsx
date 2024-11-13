@@ -73,15 +73,22 @@ export default function Navigation() {
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navItems.map((item) => (
                 <div key={item.label} className="relative inline-flex items-center">
-                  <button
-                    onClick={() => item.subItems && handleDropdownClick(item.label)}
-                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-blue-600"
-                  >
-                    {item.label}
-                    {item.subItems && (
+                  {item.subItems ? (
+                    <button
+                      onClick={() => handleDropdownClick(item.label)}
+                      className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-blue-600"
+                    >
+                      {item.label}
                       <ChevronDown className="ml-1 h-4 w-4" />
-                    )}
-                  </button>
+                    </button>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-blue-600"
+                    >
+                      {item.label}
+                    </Link>
+                  )}
 
                   {/* Desktop Dropdown */}
                   {item.subItems && openDropdown === item.label && (
@@ -127,20 +134,30 @@ export default function Navigation() {
         <div className="pt-2 pb-3 space-y-1">
           {navItems.map((item) => (
             <div key={item.label}>
-              <button
-                onClick={() => item.subItems && handleMobileDropdownClick(item.label)}
-                className="w-full flex items-center justify-between px-4 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-              >
-                <div className="flex items-center">
-                  {item.icon}
-                  <span className="ml-3">{item.label}</span>
-                </div>
-                {item.subItems && (
+              {item.subItems ? (
+                <button
+                  onClick={() => handleMobileDropdownClick(item.label)}
+                  className="w-full flex items-center justify-between px-4 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  <div className="flex items-center">
+                    {item.icon}
+                    <span className="ml-3">{item.label}</span>
+                  </div>
                   <ChevronDown className={`ml-2 h-5 w-5 transform transition-transform ${
                     mobileOpenDropdown === item.label ? 'rotate-180' : ''
                   }`} />
-                )}
-              </button>
+                </button>
+              ) : (
+                <Link
+                  to={item.href}
+                  className="w-full flex items-center px-4 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  <div className="flex items-center">
+                    {item.icon}
+                    <span className="ml-3">{item.label}</span>
+                  </div>
+                </Link>
+              )}
 
               {/* Mobile Dropdown */}
               {item.subItems && mobileOpenDropdown === item.label && (
