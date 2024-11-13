@@ -14,6 +14,9 @@ import { StormReportService } from './services/StormReportService';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import SupabaseTest from './components/SupabaseTest';
 import DamageAssessmentReport from './components/report/damageAssessmentReport';
+import { NotificationService } from './services/NotificationService';
+import NotificationsTest from './components/NotificationsTest';
+import RestoProfessionals from './components/RestoProfessionals';
 
 const initialFormData: FormData = {
   propertyType: 'home',
@@ -86,6 +89,9 @@ function App() {
       // Store report data in Supabase
       await storeReportData(reportData);
 
+      // Send notifications
+      // await NotificationService.notifyUser(data, reportId);
+
       // Navigate to report page
       navigate(`/report/${reportData.reportId}`);
 
@@ -116,6 +122,8 @@ function App() {
           <Route path="/report/:reportId" element={<DamageAssessmentReport />} />
           <Route path="/supabase-test" element={<SupabaseTest />} />
           <Route path="/stormreport-test" element={<StormReportsTest />} />
+          <Route path="/professionals" element={<RestoProfessionals />} />
+          <Route path="/test/notifications" element={<NotificationsTest />} />
         </Routes>
 
         <QuestionnaireModal
