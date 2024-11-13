@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Shield, Users, Handshake, Building, DollarSign, Network } from 'lucide-react';
+import ContractorForm from './ContractorQuestionnaire/ContractorForm';
 
 export default function RestoProfessionals() {
+  const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
+
   const benefits = [
     {
       icon: <Users className="w-12 h-12 text-blue-600" />,
@@ -38,7 +41,10 @@ export default function RestoProfessionals() {
             <p className="text-xl text-blue-100 max-w-3xl mx-auto mb-8">
               Be part of a community-driven, national network of dedicated construction professionals who specialize in rebuilding homes and restoring hope after severe storms or wildfires.
             </p>
-            <button className="bg-yellow-500 hover:bg-yellow-400 text-blue-900 px-8 py-4 rounded-full text-lg font-bold transition-all transform hover:scale-105">
+            <button 
+              onClick={() => setIsQuestionnaireOpen(true)}
+              className="bg-yellow-500 hover:bg-yellow-400 text-blue-900 px-8 py-4 rounded-full text-lg font-bold transition-all transform hover:scale-105"
+            >
               Apply to Join Network
             </button>
           </div>
@@ -108,6 +114,26 @@ export default function RestoProfessionals() {
           </div>
         </div>
       </div>
+
+      {/* Contractor Questionnaire Modal */}
+      {isQuestionnaireOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Contractor Application</h2>
+              <button
+                onClick={() => setIsQuestionnaireOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4">
+              <ContractorForm onClose={() => setIsQuestionnaireOpen(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
