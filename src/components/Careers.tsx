@@ -113,6 +113,7 @@ export default function Careers() {
     message: '',
   });
   const [emailError, setEmailError] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -138,7 +139,7 @@ export default function Careers() {
       ...formData
     });
 
-    // Clear form and close modal
+    // Clear form and show confirmation
     setFormData({
       name: '',
       email: '',
@@ -146,8 +147,14 @@ export default function Careers() {
       message: '',
     });
     setShowModal(false);
-    setSelectedPosition(null);
-    setEmailError('');
+    setShowConfirmation(true);
+    
+    // Hide confirmation after 5 seconds
+    setTimeout(() => {
+      setShowConfirmation(false);
+      setSelectedPosition(null);
+      setEmailError('');
+    }, 5000);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -305,6 +312,21 @@ export default function Careers() {
                 Submit Application
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 text-center">
+            <Shield className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Thank You for Applying!
+            </h3>
+            <p className="text-gray-600">
+              We appreciate your interest in joining our team. We will carefully review your application and get back to you soon.
+            </p>
           </div>
         </div>
       )}

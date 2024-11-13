@@ -31,8 +31,7 @@ const navItems: NavItem[] = [
     icon: <Info className="w-5 h-5" />,
     subItems: [
       { label: 'FAQ', href: '/faq' },
-      { label: 'Careers', href: '/careers' },
-      { label: 'Contact', href: '/about/contact' },
+      { label: 'Careers', href: '/careers' }
     ],
   },
 ];

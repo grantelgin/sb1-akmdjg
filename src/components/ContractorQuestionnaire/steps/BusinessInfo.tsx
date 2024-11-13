@@ -68,7 +68,7 @@ export default function BusinessInfo({ formData, onComplete }: Props) {
           <input
             type="text"
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             value={localFormData.businessName}
             onChange={handleChange('businessName')}
           />
@@ -78,7 +78,7 @@ export default function BusinessInfo({ formData, onComplete }: Props) {
           <input
             type="text"
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             value={localFormData.contactName}
             onChange={handleChange('contactName')}
           />
@@ -88,7 +88,7 @@ export default function BusinessInfo({ formData, onComplete }: Props) {
           <input
             type="email"
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             value={localFormData.email}
             onChange={handleChange('email')}
           />
@@ -98,7 +98,7 @@ export default function BusinessInfo({ formData, onComplete }: Props) {
           <input
             type="tel"
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             value={localFormData.phone}
             onChange={handleChange('phone')}
           />
@@ -110,7 +110,7 @@ export default function BusinessInfo({ formData, onComplete }: Props) {
           type="text"
           required
           placeholder="Start typing an address..."
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
           value={localFormData.address}
           onChange={handleChange('address')}
         />

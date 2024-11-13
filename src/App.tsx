@@ -18,6 +18,7 @@ import { NotificationService } from './services/NotificationService';
 import NotificationsTest from './components/NotificationsTest';
 import RestoProfessionals from './components/RestoProfessionals';
 import Careers from './components/Careers';
+import CrispChat from './components/CrispChat';
 
 const initialFormData: FormData = {
   propertyType: 'home',
@@ -137,6 +138,7 @@ function App() {
           onSubmit={handleSubmit}
           onStepChange={handleStepChange}
         />
+        <CrispChat />
       </div>
     );
 }
