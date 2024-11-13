@@ -1,5 +1,5 @@
-import React from 'react';
-import { Mail, Shield, Clock, MapPin, Building2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mail, Shield, Clock, MapPin, Building2, X } from 'lucide-react';
 
 interface Position {
   title: string;
@@ -7,6 +7,13 @@ interface Position {
   requirements: string[];
   type: string;
   location: string;
+}
+
+interface ApplicationForm {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
 }
 
 const positions: Position[] = [
@@ -97,6 +104,63 @@ const positions: Position[] = [
 ];
 
 export default function Careers() {
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState<ApplicationForm>({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
+  const [emailError, setEmailError] = useState('');
+
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleApply = (position: Position) => {
+    setSelectedPosition(position);
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateEmail(formData.email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    // Here you would typically send this data to your backend
+    console.log('Application submitted:', {
+      position: selectedPosition?.title,
+      ...formData
+    });
+
+    // Clear form and close modal
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      message: '',
+    });
+    setShowModal(false);
+    setSelectedPosition(null);
+    setEmailError('');
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (name === 'email') {
+      setEmailError('');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -145,16 +209,105 @@ export default function Careers() {
                       ))}
                     </ul>
                   </div>
-                  <button className="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
-                    <Mail className="w-4 h-4 mr-2" />
-                    Apply Now
-                  </button>
+                   <button  onClick={() => handleApply(position)} className="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                        <Mail className="w-4 h-4 mr-2" />
+                        Apply Now
+                    </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Application Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            <h3 className="text-xl font-bold mb-4">
+              Apply for {selectedPosition?.title}
+            </h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 ${
+                    emailError ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {emailError && (
+                  <p className="mt-1 text-sm text-red-500">{emailError}</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  required
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Message
+                </label>
+                <textarea
+                  name="message"
+                  required
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Tell us about your relevant experience..."
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Submit Application
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
