@@ -55,6 +55,26 @@ export default function GuideDetail() {
 
       {/* Content Section */}
       <div className="max-w-3xl mx-auto px-4 py-16">
+        <style>
+          {`
+            .highlight {
+              background-color: #EFF6FF;
+              padding: 1rem;
+              border-left: 4px solid #3B82F6;
+              margin-bottom: 1.5rem;
+              border-radius: 0.5rem;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            .important {
+              background-color: #FEF2F2;
+              padding: 1rem;
+              border-left: 4px solid #EF4444;
+              margin-bottom: 1.5rem;
+              border-radius: 0.5rem;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+          `}
+        </style>
         <div className="prose prose-lg prose-blue max-w-none">
           {/* Cover Image */}
           <img 
