@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Menu, X, Home, Building2, Users, Info } from 'lucide-react';
+import { ChevronDown, Menu, X, Home, Building2, Users, Info, Book } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface NavItem {
@@ -24,6 +24,11 @@ const navItems: NavItem[] = [
     label: 'Restoration Professionals',
     href: '/professionals',
     icon: <Users className="w-5 h-5" />
+  },
+  {
+    label: 'Guides',
+    href: '/guides',
+    icon: <Book className="w-5 h-5" />
   },
   {
     label: 'About RRN',

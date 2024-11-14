@@ -19,6 +19,8 @@ import NotificationsTest from './components/NotificationsTest';
 import RestoProfessionals from './components/RestoProfessionals';
 import Careers from './components/Careers';
 import CrispChat from './components/CrispChat';
+import GuidesCollection from './components/Guides/GuidesCollection';
+import GuideDetail from './components/Guides/GuideDetail';
 
 const initialFormData: FormData = {
   propertyType: 'home',
@@ -121,6 +123,8 @@ function App() {
             </>
           } />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/guides" element={<GuidesCollection />} />
+          <Route path="/guides/:slug" element={<GuideDetail />} />
           <Route path="/report/:reportId" element={<DamageAssessmentReport />} />
           <Route path="/supabase-test" element={<SupabaseTest />} />
           <Route path="/stormreport-test" element={<StormReportsTest />} />
