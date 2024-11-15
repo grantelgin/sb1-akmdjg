@@ -31,6 +31,7 @@ interface ReportData {
   contactConsent: boolean;
   stormReports: StormReport[]; // Add this line
   reportId: string; // Add this line
+  weatherHistory?: WeatherHistory;
 }
 
 const getSeverityColor = (severity: DamageSeverity) => {
@@ -308,6 +309,70 @@ function DamageAssessmentReport() {
       No storm reports found in your area for the specified date range.
     </p>
   )}
+</div>
+{/* Weather History Section */}
+<div className="px-6 py-6 border-t">
+  <div className="flex items-center space-x-3 mb-4">
+    <Cloud className="w-5 h-5 text-blue-600" />
+    <h2 className="text-xl font-semibold text-gray-900">Weather Conditions</h2>
+  </div>
+  
+  <div className="space-y-6">
+    {/* OpenWeather Data */}
+    {reportData.weatherHistory?.openWeather.length > 0 ? (
+      <div className="bg-blue-50 rounded-lg p-4">
+        <h3 className="font-semibold mb-3">OpenWeather Report</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {reportData.weatherHistory.openWeather.map((weather, index) => (
+            <div key={index} className="bg-white p-3 rounded shadow-sm">
+              <div className="text-sm text-gray-600">
+                {new Date(weather.date).toLocaleTimeString()}
+              </div>
+              <div className="font-medium">{weather.temperature}°F</div>
+              <div className="text-sm">
+                Wind: {weather.windSpeed} mph
+                {weather.windGust && ` (Gusts: ${weather.windGust} mph)`}
+              </div>
+              <div className="text-sm">
+                Precipitation: {weather.precipitation}″
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : null}
+
+    {/* NOAA Data */}
+    {reportData.weatherHistory?.noaa.length > 0 ? (
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h3 className="font-semibold mb-3">NOAA Weather Data</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {reportData.weatherHistory.noaa.map((weather, index) => (
+            <div key={index} className="bg-white p-3 rounded shadow-sm">
+              <div className="text-sm text-gray-600">
+                {new Date(weather.date).toLocaleDateString()} {new Date(weather.date).toLocaleTimeString([], {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true
+                })}
+              </div>
+              <div className="font-medium">{weather.temperature}°F</div>
+              <div className="text-sm">Wind: {weather.windSpeed} mph</div>
+              <div className="text-sm">
+                Precipitation: {weather.precipitation}″
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : null}
+    
+    {(!reportData.weatherHistory?.openWeather.length && !reportData.weatherHistory?.noaa.length) && (
+      <p className="text-gray-500">
+        Weather data is currently unavailable for the date of damage.
+      </p>
+    )}
+  </div>
 </div>
 
         {/* Footer */}

@@ -1,5 +1,7 @@
 import { supabase } from './supabase';
 import { FormData } from '../components/Questionnaire/types';
+import { StormReportService } from '../services/StormReportService';
+import { WeatherService } from '../services/WeatherService';
 
 /**
  * Generates a unique report ID using timestamp and random string
@@ -128,38 +130,60 @@ export async function storeReportData(reportData: any): Promise<void> {
  * Retrieves report data from Supabase database
  * Helper function to get report data
  */
-export async function getReportData(reportId: string): Promise<any> {
+export async function getReportData(reportId: string) {
+  const report = await fetchReport(reportId);
+  
+  // Fetch storm reports and weather data in parallel
+  const [stormReports, weatherHistory] = await Promise.all([
+    StormReportService.getStormReports(
+      report.damageDate,
+      report.coordinates.lat,
+      report.coordinates.lon
+    ),
+    WeatherService.getWeatherHistory(
+      report.coordinates.lat,
+      report.coordinates.lon,
+      report.damageDate
+    )
+  ]);
+
+  return {
+    ...report,
+    stormReports,
+    weatherHistory
+  };
+}
+
+async function fetchReport(reportId: string) {
   try {
-    const { data, error } = await supabase
+    // Fetch report data from Supabase
+    const { data: report, error } = await supabase
       .from('damage_reports')
       .select('*')
       .eq('report_id', reportId)
       .single();
 
     if (error) throw error;
-    if (!data) throw new Error('Report not found');
+    if (!report) throw new Error('Report not found');
 
-    console.log('Raw data from Supabase:', data);
-    console.log('Storm reports:', data.storm_reports);
-
+    // Transform the database record into the expected ReportData format
     return {
-      reportId: data.report_id,
-      propertyType: data.property_type,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      email: data.email,
-      address: data.address,
-      damageDate: data.damage_date,
-      damageAssessment: data.damage_assessment,
-      insuranceClaim: data.insurance_claim,
-      contactConsent: data.contact_consent,
-      images: data.image_urls,
-      receipts: data.receipt_urls,
-      stormReports: data.storm_reports || [],
-      createdAt: data.created_at
+      reportId: report.report_id,
+      propertyType: report.property_type,
+      firstName: report.first_name,
+      lastName: report.last_name,
+      email: report.email,
+      address: report.address,
+      damageDate: report.damage_date,
+      damageAssessment: report.damage_assessment,
+      insuranceClaim: report.insurance_claim,
+      contactConsent: report.contact_consent,
+      images: report.image_urls || [],
+      receipts: report.receipt_urls || [],
+      coordinates: await getCoordinatesFromAddress(report.address)
     };
   } catch (error) {
-    console.error('Error retrieving report data:', error);
+    console.error('Error fetching report:', error);
     throw error;
   }
 }
