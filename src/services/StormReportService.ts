@@ -103,11 +103,12 @@ export class StormReportService {
       const year = '20' + urlDate.substring(0, 2);
       const month = urlDate.substring(2, 4);
       const day = urlDate.substring(4, 6);
-      const time = values[headers.indexOf('Time')];
+      const timeValue = values[headers.indexOf('Time')];
+      const paddedTime = timeValue.padStart(4, '0');
+      const hours = paddedTime.slice(0, 2);
+      const minutes = paddedTime.slice(2);
+      const date = `${year}-${month}-${day}T${hours}:${minutes}:00Z`;
       
-      // Combine date and time
-      const date = `${year}-${month}-${day}T${time.padStart(4, '0')}:00Z`;
-
       const report: Partial<StormReport> = {
         type: this.determineReportType(headers),
         date: date,
