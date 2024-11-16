@@ -10,7 +10,7 @@ export const guides: Guide[] = [
     slug: 'damage-assessment-guide',
     readingTime: '5 min read',
     publishDate: 'March 15, 2024',
-    coverImage: 'https://images.unsplash.com/photo-1523294587484-bae6cc870010',
+    coverImage: 'https://acltziqyxiugurpdduim.supabase.co/storage/v1/object/public/guide-images/guide-cover-damage-assessment.jpg',
     content: `
     <h2>Comprehensive Guide to Storm Damage Assessment</h2>
     <p>Welcome! If you’re reading this, you’ve likely experienced the overwhelming aftermath of a storm. As an experienced project manager in storm restoration, I’m here to guide you step by step through the process of assessing your home or business for damage. Remember, you are not alone—this is your first step toward recovery, and I’m here to support you every step of the way.</p>
@@ -80,7 +80,7 @@ export const guides: Guide[] = [
     slug: 'selecting-construction-team',
     readingTime: '4 min read',
     publishDate: 'March 18, 2024',
-    coverImage: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12',
+    coverImage: 'https://acltziqyxiugurpdduim.supabase.co/storage/v1/object/public/guide-images/guide-cover-selecting-team.jpg',
     content: `
 <h2>Finding the Right Construction Team</h2>
     <p>Your choice of contractors will significantly impact the quality and success of your restoration project. Here's how to make an informed decision.</p>
@@ -131,7 +131,7 @@ export const guides: Guide[] = [
     slug: 'construction-contracts',
     readingTime: '4 min read',
     publishDate: 'March 20, 2024',
-    coverImage: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85',
+    coverImage: 'https://acltziqyxiugurpdduim.supabase.co/storage/v1/object/public/guide-images/guide-cover-contract-review.jpg',
     content: `
     <h2>Essential Contract Elements</h2>
     <p>Understanding your construction contract is crucial for a successful restoration project. This guide explains key terms and provisions you should know.</p>
@@ -180,7 +180,7 @@ export const guides: Guide[] = [
     slug: 'estimating-costs',
     readingTime: '3 min read',
     publishDate: 'March 22, 2024',
-    coverImage: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40',
+    coverImage: 'https://acltziqyxiugurpdduim.supabase.co/storage/v1/object/public/guide-images/guide-cover-estimating.jpg',
     content: `
 <h2>Understanding Construction Estimates</h2>
 <p>Accurate cost estimation is crucial for budgeting your restoration project. Learn how to read and evaluate construction estimates effectively.</p>
