@@ -21,6 +21,10 @@ import Careers from './components/Careers';
 import CrispChat from './components/CrispChat';
 import GuidesCollection from './components/Guides/GuidesCollection';
 import GuideDetail from './components/Guides/GuideDetail';
+import Locations from './components/Locations';
+import LocationDetail from './components/LocationDetail';
+import TigerDataManager from './components/admin/TigerDataManager';
+
 
 const initialFormData: FormData = {
   propertyType: 'home',
@@ -131,6 +135,9 @@ function App() {
           <Route path="/professionals" element={<RestoProfessionals />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/test/notifications" element={<NotificationsTest />} />
+          <Route path="/locations" element={<Locations />} />
+          <Route path="/locations/:state/:city" element={<LocationDetail />} />
+          <Route path="/admin/tiger-data" element={<TigerDataManager />} />
         </Routes>
 
         <QuestionnaireModal

@@ -1,10 +1,11 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCircle, Cloud } from 'lucide-react';
+import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCircle, Cloud, Users, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getReportData } from '../../utils/reportUtils';
 import { StormReport } from '../../types/StormReport';
 import { StormReportsMap } from '../StormReportsMap';
+import { estimateDemandSurge, DemandSurgeEstimate } from '../../utils/demandSurgeUtils';
 
 // Types for our damage assessment
 type DamageSeverity = 'none' | 'minor' | 'moderate' | 'severe';
@@ -32,6 +33,7 @@ interface ReportData {
   stormReports: StormReport[]; // Add this line
   reportId: string; // Add this line
   weatherHistory?: WeatherHistory;
+  demandSurge?: DemandSurgeEstimate;
 }
 
 const getSeverityColor = (severity: DamageSeverity) => {
@@ -69,9 +71,9 @@ function DamageAssessmentReport() {
   useEffect(() => {
     const fetchReportData = async () => {
       const data = await getReportData(reportId);
-      console.log('Report data in component:', data);
-      console.log('Storm reports in component:', data.stormReports);
-      setReportData(data);
+      const coordinates = await getCoordinatesFromAddress(data.address);
+      const demandSurge = await estimateDemandSurge(coordinates.lat, coordinates.lon);
+      setReportData({ ...data, demandSurge });
     };
     fetchReportData();
   }, [reportId]);
@@ -79,6 +81,59 @@ function DamageAssessmentReport() {
   if (!reportData) {
     return <div>Loading...</div>;
   }
+
+  const DemandSurgeSection = ({ demandSurge }: { demandSurge: DemandSurgeEstimate }) => (
+    <div className="px-6 py-6 border-t">
+      <div className="flex items-center space-x-3 mb-4">
+        <Users className="w-5 h-5 text-blue-600" />
+        <h2 className="text-xl font-semibold text-gray-900">Repair Demand Estimate</h2>
+      </div>
+
+      <div className="bg-gray-50 rounded-lg p-6">
+        <div className="flex items-center mb-4">
+          <Clock className="w-5 h-5 mr-2" />
+          <span className={`font-semibold ${
+            demandSurge.level === 'High' ? 'text-red-600' :
+            demandSurge.level === 'Medium' ? 'text-orange-500' :
+            'text-green-600'
+          }`}>
+            {demandSurge.level} Demand Area
+          </span>
+        </div>
+
+        <p className="text-gray-600 mb-4">{demandSurge.description}</p>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="text-sm text-gray-600">Single-Family</div>
+            <div className="text-lg font-semibold">{demandSurge.buildingCounts.singleFamily.toLocaleString()}</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="text-sm text-gray-600">Multi-Family</div>
+            <div className="text-lg font-semibold">{demandSurge.buildingCounts.multiFamily.toLocaleString()}</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="text-sm text-gray-600">Commercial</div>
+            <div className="text-lg font-semibold">{demandSurge.buildingCounts.commercial.toLocaleString()}</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="text-sm text-gray-600">Industrial</div>
+            <div className="text-lg font-semibold">{demandSurge.buildingCounts.industrial.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="flex items-center mb-2">
+            <AlertTriangle className="w-4 h-4 text-blue-600 mr-2" />
+            <span className="font-medium">Note:</span>
+          </div>
+          <p className="text-sm text-gray-600">
+            This is an estimate based on the total number of buildings in your area that could potentially be affected by similar weather events. Actual demand may vary based on storm severity, damage patterns, and other factors.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -310,6 +365,7 @@ function DamageAssessmentReport() {
     </p>
   )}
 </div>
+{reportData.demandSurge && <DemandSurgeSection demandSurge={reportData.demandSurge} />}
 {/* Weather History Section */}
 <div className="px-6 py-6 border-t">
   <div className="flex items-center space-x-3 mb-4">
