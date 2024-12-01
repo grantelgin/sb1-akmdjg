@@ -27,10 +27,20 @@ export class TigerDataService {
   private static readonly SEARCH_RADIUS_MILES = 50;
 
   private static readonly BUILDING_CODES = {
-    'R1': 'single_family',
-    'R2': 'multi_family',
-    'C1': 'commercial',
-    'I1': 'industrial'
+    'C3023': 'commercial',    // School or Academy
+    'C3024': 'commercial',    // College or University
+    'C3026': 'commercial',    // Library
+    'C3027': 'commercial',    // Hospital
+    'C3033': 'commercial',    // Shopping Center or Mall
+    'C3034': 'commercial',    // Golf Course
+    'C3036': 'commercial',    // Hotel, Motel, Resort
+    'C3043': 'commercial',    // Stadium or Arena
+    'C3052': 'industrial',    // Industrial Building or Factory
+    'C3061': 'commercial',    // Church, Synagogue, Temple, Mosque
+    'C3063': 'commercial',    // Post Office
+    'K1237': 'single_family', // Residential Building
+    'K1251': 'multi_family',  // Apartment Complex
+    'K2183': 'industrial'     // Power Plant
   };
 
   static async loadTigerData(file: FileWithPath): Promise<void> {
@@ -135,38 +145,97 @@ export class TigerDataService {
 
   private static async processShapefile(files: ShapefileSet): Promise<void> {
     const buildings: BuildingData[] = [];
+    let totalFeatures = 0;
+    let skippedFeatures = 0;
+    let invalidFeatures = 0;
+    const foundMtfccCodes = new Set<string>();
     
-    // Read shapefile from buffers
-    const source = await shapefile.open(files.shp, files.dbf);
-    let result = await source.read();
+    try {
+      const source = await shapefile.open(files.shp, files.dbf);
+      let result = await source.read();
 
-    while (!result.done) {
-      const feature = result.value;
-      const mtfcc = feature.properties.MTFCC;
+      while (!result.done) {
+        totalFeatures++;
+        const feature = result.value;
 
-      if (this.BUILDING_CODES[mtfcc]) {
-        buildings.push({
-          type: this.BUILDING_CODES[mtfcc],
-          geometry: feature.geometry,
-          properties: feature.properties
-        });
+        if (!feature || !feature.properties) {
+          invalidFeatures++;
+          console.warn('Invalid feature found:', feature);
+          result = await source.read();
+          continue;
+        }
+
+        const mtfcc = feature.properties.MTFCC;
+        foundMtfccCodes.add(mtfcc);
+
+        if (this.BUILDING_CODES[mtfcc]) {
+          try {
+            buildings.push({
+              type: this.BUILDING_CODES[mtfcc],
+              geometry: feature.geometry,
+              properties: feature.properties
+            });
+          } catch (err) {
+            console.error('Error processing valid MTFCC feature:', err);
+            invalidFeatures++;
+          }
+        } else {
+          skippedFeatures++;
+        }
+
+        result = await source.read();
       }
 
-      result = await source.read();
+      if (buildings.length === 0) {
+        console.warn('Processing summary:', {
+          totalFeatures,
+          skippedFeatures,
+          invalidFeatures,
+          validBuildings: buildings.length,
+          foundMtfccCodes: Array.from(foundMtfccCodes),
+          expectedMtfccCodes: Object.keys(this.BUILDING_CODES)
+        });
+        throw new Error(`No valid buildings found in shapefile. 
+          Processed ${totalFeatures} features, 
+          Skipped ${skippedFeatures} features, 
+          Found ${invalidFeatures} invalid features.
+          Found MTFCC codes: ${Array.from(foundMtfccCodes).join(', ')}
+          Expected MTFCC codes: ${Object.keys(this.BUILDING_CODES).join(', ')}`);
+      }
+
+      // Batch insert into Supabase
+      const BATCH_SIZE = 1000;
+      for (let i = 0; i < buildings.length; i += BATCH_SIZE) {
+        const batch = buildings.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from('tiger_buildings')
+          .insert(batch);
+
+        if (error) {
+          console.error('Supabase insertion error:', error);
+          throw error;
+        }
+      }
+
+      console.log('Shapefile processing summary:', {
+        totalFeatures,
+        skippedFeatures,
+        invalidFeatures,
+        validBuildings: buildings.length,
+        mtfccTypes: Object.fromEntries(
+          Object.entries(
+            buildings.reduce((acc, b) => {
+              acc[b.type] = (acc[b.type] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>)
+          )
+        )
+      });
+
+    } catch (error) {
+      console.error('Error processing shapefile:', error);
+      throw error;
     }
-
-    // Batch insert into Supabase
-    const BATCH_SIZE = 1000;
-    for (let i = 0; i < buildings.length; i += BATCH_SIZE) {
-      const batch = buildings.slice(i, i + BATCH_SIZE);
-      const { error } = await supabase
-        .from('tiger_buildings')
-        .insert(batch);
-
-      if (error) throw error;
-    }
-
-    console.log(`Loaded ${buildings.length} buildings from shapefile`);
   }
 
   static async getBuildingCounts(lat: number, lon: number): Promise<{

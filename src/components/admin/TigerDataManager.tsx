@@ -10,6 +10,12 @@ interface DataStats {
   commercial: number;
   industrial: number;
   total: number;
+  processingSummary?: {
+    totalFeatures: number;
+    skippedFeatures: number;
+    invalidFeatures: number;
+    validBuildings: number;
+  };
 }
 
 export default function TigerDataManager() {
@@ -36,6 +42,7 @@ export default function TigerDataManager() {
         }
       }
       
+      await TigerDataService.loadTigerData(shpFile);
       setSuccess('Data loaded successfully');
       await verifyDataLoad();
     } catch (err) {
@@ -132,9 +139,19 @@ export default function TigerDataManager() {
         )}
 
         {success && (
-          <div className="flex items-center text-green-600">
-            <CheckCircle className="w-5 h-5 mr-2" />
-            {success}
+          <div className="bg-green-50 rounded-lg p-4">
+            <div className="flex items-center text-green-600 mb-2">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              {success}
+            </div>
+            {stats?.processingSummary && (
+              <div className="text-sm text-green-700 ml-7">
+                <div>Total features processed: {stats.processingSummary.totalFeatures}</div>
+                <div>Valid buildings found: {stats.processingSummary.validBuildings}</div>
+                <div>Skipped features: {stats.processingSummary.skippedFeatures}</div>
+                <div>Invalid features: {stats.processingSummary.invalidFeatures}</div>
+              </div>
+            )}
           </div>
         )}
 
