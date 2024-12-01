@@ -18,6 +18,39 @@ create index tiger_buildings_geometry_idx on tiger_buildings using gist (
   )
 );
 
+-- Add a hash column for geometry
+ALTER TABLE tiger_buildings 
+ADD COLUMN geometry_hash text GENERATED ALWAYS AS (
+  encode(sha256(geometry::text::bytea), 'hex')
+) STORED;
+
+-- Create index on the hash instead
+CREATE UNIQUE INDEX unique_building_idx ON tiger_buildings (type, geometry_hash);
+
+-- Create an upsert function using the hash
+CREATE OR REPLACE FUNCTION upsert_buildings(
+  buildings jsonb[]
+) RETURNS void AS $$
+DECLARE
+  batch_size constant int := 100;
+  i int;
+BEGIN
+  FOR i IN 0..array_length(buildings, 1)-1 BY batch_size LOOP
+    INSERT INTO tiger_buildings (type, geometry, properties)
+    SELECT 
+      (building->>'type')::text,
+      (building->>'geometry')::jsonb,
+      (building->>'properties')::jsonb
+    FROM unnest(buildings[i:least(i+batch_size-1, array_length(buildings, 1)-1)]) AS building
+    ON CONFLICT (type, geometry_hash) 
+    DO NOTHING;
+    
+    -- Add a small delay between sub-batches to prevent timeouts
+    PERFORM pg_sleep(0.1);
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create function to get buildings within radius
 CREATE OR REPLACE FUNCTION get_buildings_in_radius(
   search_lat double precision,
