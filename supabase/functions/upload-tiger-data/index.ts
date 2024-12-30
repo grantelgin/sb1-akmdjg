@@ -13,16 +13,63 @@ serve(async (req) => {
   }
 
   try {
-    // Get the request body as ArrayBuffer
-    const buffer = await req.arrayBuffer()
-
-    // Create Supabase client
+    const url = new URL(req.url)
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Process the shapefile
+    // Handle building counts request
+    if (url.pathname.endsWith('/building-counts')) {
+      const params = url.searchParams
+      const lat = parseFloat(params.get('lat') ?? '0')
+      const lon = parseFloat(params.get('lon') ?? '0')
+      const radiusMiles = parseFloat(params.get('radius') ?? '50')
+
+      const { data: buildings, error } = await supabaseClient
+        .rpc('get_buildings_in_radius', {
+          search_lat: lat,
+          search_lon: lon,
+          radius_miles: radiusMiles
+        })
+
+      if (error) throw error
+
+      // Count buildings by type
+      const counts = {
+        singleFamily: 0,
+        multiFamily: 0,
+        commercial: 0,
+        industrial: 0
+      }
+
+      buildings.forEach((building: { type: string }) => {
+        switch (building.type) {
+          case 'single_family':
+            counts.singleFamily++
+            break
+          case 'multi_family':
+            counts.multiFamily++
+            break
+          case 'commercial':
+            counts.commercial++
+            break
+          case 'industrial':
+            counts.industrial++
+            break
+        }
+      })
+
+      return new Response(
+        JSON.stringify({ success: true, counts }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Handle file upload
+    const buffer = await req.arrayBuffer()
     const source = await shapefile.open(buffer)
     let result = await source.read()
     const buildings = []
