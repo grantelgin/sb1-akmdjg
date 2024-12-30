@@ -2,10 +2,23 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCircle, Cloud, Users, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getReportData } from '../../utils/reportUtils';
+import { getReportData, getCoordinatesFromAddress } from '../../utils/reportUtils';
 import { StormReport } from '../../types/StormReport';
 import { StormReportsMap } from '../StormReportsMap';
 import { estimateDemandSurge, DemandSurgeEstimate } from '../../utils/demandSurgeUtils';
+
+interface WeatherData {
+  date: string;
+  temperature: number;
+  windSpeed: number;
+  windGust?: number;
+  precipitation: number;
+}
+
+interface WeatherHistory {
+  openWeather: WeatherData[];
+  noaa: WeatherData[];
+}
 
 // Types for our damage assessment
 type DamageSeverity = 'none' | 'minor' | 'moderate' | 'severe';
@@ -71,6 +84,7 @@ function DamageAssessmentReport() {
 
   useEffect(() => {
     const fetchReportData = async () => {
+      if (!reportId) return;
       const data = await getReportData(reportId);
       const coordinates = await getCoordinatesFromAddress(data.address);
       const demandSurge = await estimateDemandSurge(coordinates.lat, coordinates.lon);
@@ -380,11 +394,11 @@ function DamageAssessmentReport() {
   
   <div className="space-y-6">
     {/* OpenWeather Data */}
-    {reportData.weatherHistory?.openWeather.length > 0 ? (
+    {reportData?.weatherHistory?.openWeather?.length > 0 ? (
       <div className="bg-blue-50 rounded-lg p-4">
         <h3 className="font-semibold mb-3">OpenWeather Report</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {reportData.weatherHistory.openWeather.map((weather, index) => (
+          {reportData?.weatherHistory?.openWeather?.map((weather: WeatherData, index: number) => (
             <div key={index} className="bg-white p-3 rounded shadow-sm">
               <div className="text-sm text-gray-600">
                 {new Date(weather.date).toLocaleTimeString()}
@@ -404,11 +418,11 @@ function DamageAssessmentReport() {
     ) : null}
 
     {/* NOAA Data */}
-    {reportData.weatherHistory?.noaa.length > 0 ? (
+    {reportData?.weatherHistory?.noaa?.length > 0 ? (
       <div className="bg-gray-50 rounded-lg p-4">
         <h3 className="font-semibold mb-3">NOAA Weather Data</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {reportData.weatherHistory.noaa.map((weather, index) => (
+          {reportData?.weatherHistory?.noaa?.map((weather: WeatherData, index: number) => (
             <div key={index} className="bg-white p-3 rounded shadow-sm">
               <div className="text-sm text-gray-600">
                 {new Date(weather.date).toLocaleDateString()} {new Date(weather.date).toLocaleTimeString([], {
@@ -428,7 +442,7 @@ function DamageAssessmentReport() {
       </div>
     ) : null}
     
-    {(!reportData.weatherHistory?.openWeather.length && !reportData.weatherHistory?.noaa.length) && (
+    {(!reportData?.weatherHistory?.openWeather?.length && !reportData?.weatherHistory?.noaa?.length) && (
       <p className="text-gray-500">
         Weather data is currently unavailable for the date of damage.
       </p>
