@@ -1,11 +1,12 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCircle, Cloud, Users, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getReportData, getCoordinatesFromAddress } from '../../utils/reportUtils';
 import { StormReport } from '../../types/StormReport';
 import { StormReportsMap } from '../StormReportsMap';
 import { estimateDemandSurge, DemandSurgeEstimate } from '../../utils/demandSurgeUtils';
+import { supabase } from '../../utils/supabase';
 
 interface WeatherData {
   date: string;
@@ -81,20 +82,79 @@ const MAX_DISTANCE_MILES = 100; // Match with StormReportService
 function DamageAssessmentReport() {
   const { reportId } = useParams();
   const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     const fetchReportData = async () => {
       if (!reportId) return;
-      const data = await getReportData(reportId);
-      const coordinates = await getCoordinatesFromAddress(data.address);
-      const demandSurge = await estimateDemandSurge(coordinates.lat, coordinates.lon);
-      setReportData({ ...data, demandSurge });
+      
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Fetch report data
+        const data = await getReportData(reportId);
+        
+        // Check if user is the owner of the report
+        const { data: reportOwner } = await supabase
+          .from('damage_reports')
+          .select('owner_id')
+          .eq('report_id', reportId)
+          .single();
+        
+        const hasOwnership = Boolean(user && reportOwner && user.id === reportOwner.owner_id);
+        setIsOwner(hasOwnership);
+
+        // If not owner, redact sensitive information
+        if (!hasOwnership) {
+          data.firstName = '[Redacted]';
+          data.lastName = '[Redacted]';
+          data.email = '[Redacted]';
+          data.phoneNumber = '[Redacted]';
+        }
+
+        const coordinates = await getCoordinatesFromAddress(data.address);
+        const demandSurge = await estimateDemandSurge(coordinates.lat, coordinates.lon);
+        setReportData({ ...data, demandSurge });
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching report:', error);
+        setError('You do not have permission to view this report.');
+        setIsLoading(false);
+      }
     };
+
     fetchReportData();
   }, [reportId]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading report...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-100 text-red-600 p-4 rounded-lg">
+            <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+            <p>{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!reportData) {
-    return <div>Loading...</div>;
+    return <Navigate to="/" replace />;
   }
 
   const DemandSurgeSection = ({ demandSurge }: { demandSurge: DemandSurgeEstimate }) => (
@@ -394,11 +454,11 @@ function DamageAssessmentReport() {
   
   <div className="space-y-6">
     {/* OpenWeather Data */}
-    {reportData?.weatherHistory?.openWeather?.length > 0 ? (
+    {reportData?.weatherHistory?.openWeather && reportData.weatherHistory.openWeather.length > 0 ? (
       <div className="bg-blue-50 rounded-lg p-4">
         <h3 className="font-semibold mb-3">OpenWeather Report</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {reportData?.weatherHistory?.openWeather?.map((weather: WeatherData, index: number) => (
+          {reportData.weatherHistory.openWeather.map((weather: WeatherData, index: number) => (
             <div key={index} className="bg-white p-3 rounded shadow-sm">
               <div className="text-sm text-gray-600">
                 {new Date(weather.date).toLocaleTimeString()}
@@ -418,11 +478,11 @@ function DamageAssessmentReport() {
     ) : null}
 
     {/* NOAA Data */}
-    {reportData?.weatherHistory?.noaa?.length > 0 ? (
+    {reportData?.weatherHistory?.noaa && reportData.weatherHistory.noaa.length > 0 ? (
       <div className="bg-gray-50 rounded-lg p-4">
         <h3 className="font-semibold mb-3">NOAA Weather Data</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {reportData?.weatherHistory?.noaa?.map((weather: WeatherData, index: number) => (
+          {reportData.weatherHistory.noaa.map((weather: WeatherData, index: number) => (
             <div key={index} className="bg-white p-3 rounded shadow-sm">
               <div className="text-sm text-gray-600">
                 {new Date(weather.date).toLocaleDateString()} {new Date(weather.date).toLocaleTimeString([], {

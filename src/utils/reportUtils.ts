@@ -49,6 +49,9 @@ export async function storeReportData(reportData: any): Promise<void> {
     const reportId = reportData.reportId;
     const timestamp = new Date().toISOString();
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+
     // Ensure storm reports are properly formatted for JSON storage
     const formattedStormReports = reportData.stormReports.map((report: any) => ({
       type: report.type,
@@ -115,7 +118,8 @@ export async function storeReportData(reportData: any): Promise<void> {
         image_urls: imageUrls,
         receipt_urls: receiptUrls,
         storm_reports: formattedStormReports,
-        created_at: timestamp
+        created_at: timestamp,
+        owner_id: user?.id || null // Set owner_id to user's ID if authenticated
       });
 
     if (error) {
