@@ -7,6 +7,8 @@ export interface FormData {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber: string;
+  smsConsent: boolean;
   address: string;
   buildingMaterials?: {
     structure: string;

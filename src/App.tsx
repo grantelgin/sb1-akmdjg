@@ -31,6 +31,8 @@ const initialFormData: FormData = {
   firstName: '',
   lastName: '',
   email: '',
+  phoneNumber: '',
+  smsConsent: false,
   address: '',
   damageDate: '',
   damageAssessment: {

@@ -34,6 +34,7 @@ interface ReportData {
   reportId: string; // Add this line
   weatherHistory?: WeatherHistory;
   demandSurge?: DemandSurgeEstimate;
+  phoneNumber: string;
 }
 
 const getSeverityColor = (severity: DamageSeverity) => {
@@ -175,6 +176,10 @@ function DamageAssessmentReport() {
               <div>
                 <p className="text-sm text-gray-500">Contact Email</p>
                 <p className="font-medium text-gray-900">{reportData.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Phone Number</p>
+                <p className="font-medium text-gray-900">{reportData.phoneNumber}</p>
               </div>
             </div>
           </div>

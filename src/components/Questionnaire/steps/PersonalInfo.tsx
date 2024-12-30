@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FormData, PropertyType } from '../types';
 
 interface Props {
@@ -7,6 +7,32 @@ interface Props {
 }
 
 export default function PersonalInfo({ formData, onComplete }: Props) {
+  const [smsConsent, setSmsConsent] = useState(formData.smsConsent);
+
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digits
+    const phoneNumber = value.replace(/\D/g, '');
+    
+    // Format the number as (XXX) XXX-XXXX
+    if (phoneNumber.length <= 3) {
+      return phoneNumber;
+    } else if (phoneNumber.length <= 6) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    } else {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+    }
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedNumber = formatPhoneNumber(e.target.value);
+    e.target.value = formattedNumber;
+    
+    // Auto-check SMS consent when user starts entering phone number
+    if (formattedNumber.length > 0 && !smsConsent) {
+      setSmsConsent(true);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
@@ -15,6 +41,8 @@ export default function PersonalInfo({ formData, onComplete }: Props) {
       firstName: form.firstName.value,
       lastName: form.lastName.value,
       email: form.email.value,
+      phoneNumber: form.phoneNumber.value,
+      smsConsent: form.smsConsent.checked,
     });
   };
 
@@ -79,6 +107,36 @@ export default function PersonalInfo({ formData, onComplete }: Props) {
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
           required
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Phone Number
+        </label>
+        <input
+          type="tel"
+          name="phoneNumber"
+          defaultValue={formData.phoneNumber}
+          onChange={handlePhoneChange}
+          placeholder="(555) 555-5555"
+          maxLength={14}
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          required
+        />
+      </div>
+
+      <div className="flex items-start">
+        <input
+          type="checkbox"
+          name="smsConsent"
+          checked={smsConsent}
+          onChange={(e) => setSmsConsent(e.target.checked)}
+          className="mt-1 mr-2"
+          required
+        />
+        <label className="text-sm text-gray-600">
+          I agree to receive SMS text messages regarding my project status. Message and data rates may apply. Reply STOP to unsubscribe.
+        </label>
       </div>
 
       <button
