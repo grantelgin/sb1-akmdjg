@@ -24,6 +24,10 @@ import GuideDetail from './components/Guides/GuideDetail';
 import Locations from './components/Locations';
 import LocationDetail from './components/LocationDetail';
 import TigerDataManager from './components/admin/TigerDataManager';
+import Login from './components/auth/Login';
+import SignUp from './components/auth/SignUp';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 
 
 const initialFormData: FormData = {
@@ -128,6 +132,10 @@ function App() {
               <CallToAction onStartAssessment={() => setIsQuestionnaireOpen(true)} />
             </>
           } />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/guides" element={<GuidesCollection />} />
           <Route path="/guides/:slug" element={<GuideDetail />} />

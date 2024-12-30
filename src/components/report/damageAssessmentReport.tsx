@@ -1,12 +1,13 @@
 import React from 'react';
-import { useParams, Navigate } from 'react-router-dom';
-import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCircle, Cloud, Users, Clock } from 'lucide-react';
+import { useParams, Navigate, Link, useLocation } from 'react-router-dom';
+import { FileText, Home, Calendar, AlertTriangle, CheckCircle, XCircle, AlertCircle, Cloud, Users, Clock, LogIn } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getReportData, getCoordinatesFromAddress } from '../../utils/reportUtils';
 import { StormReport } from '../../types/StormReport';
 import { StormReportsMap } from '../StormReportsMap';
 import { estimateDemandSurge, DemandSurgeEstimate } from '../../utils/demandSurgeUtils';
 import { supabase } from '../../utils/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface WeatherData {
   date: string;
@@ -79,21 +80,54 @@ const getSeverityIcon = (severity: DamageSeverity) => {
 
 const MAX_DISTANCE_MILES = 100; // Match with StormReportService
 
+function LoginPrompt() {
+  const location = useLocation();
+
+  return (
+    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <LogIn className="h-5 w-5 text-blue-500" />
+        </div>
+        <div className="ml-3">
+          <p className="text-sm text-blue-700">
+            Want to protect your report and personal information?{' '}
+            <Link 
+              to="/login" 
+              state={{ from: location }}
+              className="font-medium underline hover:text-blue-600"
+            >
+              Log in
+            </Link>
+            {' '}or{' '}
+            <Link 
+              to="/signup"
+              state={{ from: location }}
+              className="font-medium underline hover:text-blue-600"
+            >
+              create an account
+            </Link>
+            {' '}to secure your data.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DamageAssessmentReport() {
   const { reportId } = useParams();
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchReportData = async () => {
       if (!reportId) return;
       
       try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        
         // Fetch report data
         const data = await getReportData(reportId);
         
@@ -121,13 +155,13 @@ function DamageAssessmentReport() {
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching report:', error);
-        setError('You do not have permission to view this report.');
+        setError('Error loading the report. Please try again later.');
         setIsLoading(false);
       }
     };
 
     fetchReportData();
-  }, [reportId]);
+  }, [reportId, user]);
 
   if (isLoading) {
     return (
@@ -213,6 +247,8 @@ function DamageAssessmentReport() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
+        {!user && <LoginPrompt />}
+        
         <div className="bg-white shadow rounded-lg overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8">
