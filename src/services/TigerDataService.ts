@@ -72,40 +72,4 @@ export class TigerDataService {
             throw error;
         }
     }
-
-    static async getBuildingCounts(lat: number, lon: number): Promise<{
-        singleFamily: number;
-        multiFamily: number;
-        commercial: number;
-        industrial: number;
-    }> {
-        try {
-            // Call the Edge Function
-            const response = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-tiger-data/building-counts?` +
-                new URLSearchParams({
-                    lat: lat.toString(),
-                    lon: lon.toString(),
-                    radius: this.SEARCH_RADIUS_MILES.toString()
-                }),
-                {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-                    }
-                }
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Error getting building counts');
-            }
-
-            const { counts } = await response.json();
-            return counts;
-        } catch (error) {
-            console.error('Error getting building counts:', error);
-            throw error;
-        }
-    }
 } 

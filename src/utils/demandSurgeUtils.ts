@@ -13,7 +13,14 @@ export interface DemandSurgeEstimate {
 }
 
 export async function estimateDemandSurge(lat: number, lon: number): Promise<DemandSurgeEstimate> {
-  const counts = await TigerDataService.getBuildingCounts(lat, lon);
+  // Use default counts for now
+  const counts = {
+    singleFamily: 100,
+    multiFamily: 25,
+    commercial: 15,
+    industrial: 5
+  };
+  
   const total = counts.singleFamily + counts.multiFamily + counts.commercial + counts.industrial;
 
   // Calculate residential units (assuming average of 4 units per multi-family building)

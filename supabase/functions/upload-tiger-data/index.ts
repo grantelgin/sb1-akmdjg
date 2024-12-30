@@ -5,68 +5,24 @@ import * as shapefile from 'npm:shapefile'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { 
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Max-Age': '86400',
+      }
+    })
   }
 
   try {
-    const url = new URL(req.url)
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
-
-    // Handle building counts request
-    if (url.pathname.endsWith('/building-counts')) {
-      const params = url.searchParams
-      const lat = parseFloat(params.get('lat') ?? '0')
-      const lon = parseFloat(params.get('lon') ?? '0')
-      const radiusMiles = parseFloat(params.get('radius') ?? '50')
-
-      const { data: buildings, error } = await supabaseClient
-        .rpc('get_buildings_in_radius', {
-          search_lat: lat,
-          search_lon: lon,
-          radius_miles: radiusMiles
-        })
-
-      if (error) throw error
-
-      // Count buildings by type
-      const counts = {
-        singleFamily: 0,
-        multiFamily: 0,
-        commercial: 0,
-        industrial: 0
-      }
-
-      buildings.forEach((building: { type: string }) => {
-        switch (building.type) {
-          case 'single_family':
-            counts.singleFamily++
-            break
-          case 'multi_family':
-            counts.multiFamily++
-            break
-          case 'commercial':
-            counts.commercial++
-            break
-          case 'industrial':
-            counts.industrial++
-            break
-        }
-      })
-
-      return new Response(
-        JSON.stringify({ success: true, counts }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
 
     // Handle file upload
     const buffer = await req.arrayBuffer()
