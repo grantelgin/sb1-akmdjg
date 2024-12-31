@@ -41,6 +41,40 @@ export async function getCoordinatesFromAddress(address: string): Promise<{ lat:
 }
 
 /**
+ * Calls the GoHighLevel webhook with user information
+ */
+async function callGoHighLevelWebhook(reportData: any): Promise<void> {
+  try {
+    const webhookUrl = 'https://services.leadconnectorhq.com/hooks/X3u5q9jmtuHC9kxev65r/webhook-trigger/ffa3f220-2c01-41c4-9fa2-50c0ce2a51d9';
+    const webhookData = {
+      reportId: reportData.reportId,
+      firstName: reportData.firstName,
+      lastName: reportData.lastName,
+      email: reportData.email,
+      phone: reportData.phoneNumber,
+      smsConsent: reportData.smsConsent,
+      contactConsent: reportData.contactConsent,
+      address: reportData.address
+    };
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(webhookData)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to call GoHighLevel webhook');
+    }
+  } catch (error) {
+    console.error('Error calling GoHighLevel webhook:', error);
+    // Don't throw the error - we don't want to fail the report submission if the webhook fails
+  }
+}
+
+/**
  * Stores report data in Supabase database
  * In a production environment, this would likely store to a database instead
  */
@@ -51,6 +85,9 @@ export async function storeReportData(reportData: any): Promise<void> {
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
+
+    // Call GoHighLevel webhook
+    await callGoHighLevelWebhook(reportData);
 
     // Ensure storm reports are properly formatted for JSON storage
     const formattedStormReports = reportData.stormReports.map((report: any) => ({

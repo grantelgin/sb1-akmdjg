@@ -144,7 +144,7 @@ function DamageAssessmentReport() {
         // If not owner, redact sensitive information
         if (!hasOwnership) {
           data.firstName = '[Redacted]';
-          data.lastName = '[Redacted]';
+          data.lastName = '';
           data.email = '[Redacted]';
           data.phoneNumber = '[Redacted]';
         }
