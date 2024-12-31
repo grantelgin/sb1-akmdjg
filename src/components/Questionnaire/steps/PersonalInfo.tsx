@@ -121,7 +121,6 @@ export default function PersonalInfo({ formData, onComplete }: Props) {
           placeholder="(555) 555-5555"
           maxLength={14}
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          required
         />
       </div>
 
@@ -132,7 +131,6 @@ export default function PersonalInfo({ formData, onComplete }: Props) {
           checked={smsConsent}
           onChange={(e) => setSmsConsent(e.target.checked)}
           className="mt-1 mr-2"
-          required
         />
         <label className="text-sm text-gray-600">
           I agree to receive SMS text messages regarding my project status. Message and data rates may apply. Reply STOP to unsubscribe.
