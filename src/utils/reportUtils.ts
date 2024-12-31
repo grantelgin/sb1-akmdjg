@@ -99,177 +99,46 @@ async function callGoHighLevelWebhook(reportData: any): Promise<void> {
 }
 
 /**
- * Fetches contractors from Outscraper based on damage type and location with expanding radius
+ * Fetches contractors from Outscraper based on damage type and location
  */
-async function getContractorsForDamage(damageType: string, location: string): Promise<any[]> {
+async function initiateContractorSearch(damageType: string, location: string, reportId: string): Promise<void> {
   try {
-    console.log(`[Outscraper] Starting contractor search for ${damageType} damage near ${location}`);
-    const outscraperApiKey = import.meta.env.VITE_OUTSCRAPER_API_KEY;
+    console.log(`[Contractor Search] Initiating search for ${damageType} damage near ${location}`);
     
-    if (!outscraperApiKey) {
-      console.error('[Outscraper] API key is missing');
-      throw new Error('Outscraper API key is not defined');
-    }
-
-    // Try different search radiuses until we find enough contractors
-    for (const radius of SEARCH_RADIUS_INCREMENTS) {
-      console.log(`[Outscraper] Trying ${radius} mile radius for ${damageType}`);
-      const searchQuery = `${DAMAGE_TO_SEARCH_QUERY[damageType]} near ${location} within ${radius} miles`;
-      console.log(`[Outscraper] Search query: ${searchQuery}`);
-      
-      try {
-        const response = await fetch('https://api.outscraper.com/maps/search', {
-          method: 'POST',
-          headers: {
-            'X-API-KEY': outscraperApiKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          mode: 'cors',
-          body: JSON.stringify({
-            query: searchQuery,
-            limit: 20,
-            language: 'en',
-            region: 'us'
-          })
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`[Outscraper] API request failed for ${damageType} at ${radius} miles:`, response.status, errorText);
-          throw new Error(`Failed to fetch contractors: ${response.status} ${errorText}`);
-        }
-
-        const data = await response.json();
-        const contractors = data.data || [];
-        console.log(`[Outscraper] Found ${contractors.length} contractors for ${damageType} at ${radius} miles`);
-
-        // If we found contractors, add the search radius info and return
-        if (contractors.length > 0) {
-          const enrichedContractors = contractors.map((contractor: any) => {
-            console.log(`[Outscraper] Processing contractor: ${contractor.name || 'Unknown'}`);
-            return {
-              ...contractor,
-              searchRadius: radius,
-              validationStatus: 'pending',
-              rrn_member: false
-            };
-          });
-          console.log(`[Outscraper] Successfully processed ${enrichedContractors.length} contractors for ${damageType}`);
-          return enrichedContractors;
-        }
-
-        console.log(`[Outscraper] No contractors found at ${radius} miles, expanding search radius`);
-      } catch (fetchError) {
-        console.error(`[Outscraper] Network error at ${radius} miles:`, fetchError);
-        // Continue to next radius instead of failing completely
-        continue;
-      }
-
-      // Add delay between requests to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-
-    console.warn(`[Outscraper] No contractors found for ${damageType} at any radius`);
-    return [];
-  } catch (error) {
-    console.error(`[Outscraper] Error in contractor search for ${damageType}:`, error);
-    return [];
-  }
-}
-
-/**
- * Stores potential contractors in a separate table for internal processing
- */
-async function storePotentialContractors(reportId: string, contractors: any): Promise<void> {
-  try {
-    console.log(`[Database] Starting to store contractors for report ${reportId}`);
-    const timestamp = new Date().toISOString();
-    
-    // Store each contractor type separately
-    for (const [damageType, contractorList] of Object.entries(contractors)) {
-      console.log(`[Database] Processing ${(contractorList as any[]).length} contractors for ${damageType}`);
-      
-      const { error } = await supabase
-        .from('potential_contractors')
-        .insert(
-          (contractorList as any[]).map(contractor => ({
-            report_id: reportId,
-            damage_type: damageType,
-            contractor_data: contractor,
-            search_radius: contractor.searchRadius,
-            validation_status: contractor.validationStatus,
-            rrn_member: contractor.rrn_member,
-            created_at: timestamp
-          }))
-        );
-
-      if (error) {
-        console.error(`[Database] Error storing contractors for ${damageType}:`, error);
-      } else {
-        console.log(`[Database] Successfully stored contractors for ${damageType}`);
-      }
-    }
-    console.log(`[Database] Completed storing all contractors for report ${reportId}`);
-  } catch (error) {
-    console.error('[Database] Error in storePotentialContractors:', error);
-  }
-}
-
-/**
- * Sends contractor lookup results to GoHighLevel webhook
- */
-async function sendContractorLookupToGoHighLevel(reportId: string, contractors: any): Promise<void> {
-  try {
-    console.log(`[GoHighLevel] Preparing to send contractor results for report ${reportId}`);
-    const webhookUrl = 'https://services.leadconnectorhq.com/hooks/X3u5q9jmtuHC9kxev65r/webhook-trigger/999ff891-fde9-4d55-ade1-09be0c8b94b8';
-    
-    // Format the data for each damage type
-    const contractorsByDamageType = Object.entries(contractors).map(([damageType, contractorList]) => {
-      console.log(`[GoHighLevel] Processing ${(contractorList as any[]).length} contractors for ${damageType}`);
-      return {
-        damageType,
-        contractors: (contractorList as any[]).map(contractor => ({
-          businessName: contractor.name,
-          phone: contractor.phone,
-          address: contractor.address,
-          website: contractor.website,
-          rating: contractor.rating,
-          reviewCount: contractor.reviewCount,
-          searchRadius: contractor.searchRadius
-        }))
-      };
-    });
-
-    const webhookData = {
-      reportId,
-      contractorLookupResults: contractorsByDamageType,
-      timestamp: new Date().toISOString()
-    };
-
-    console.log(`[GoHighLevel] Sending webhook data for report ${reportId}:`, JSON.stringify(webhookData, null, 2));
-
-    const response = await fetch(webhookUrl, {
+    const response = await fetch('/functions/v1/contractor-lookup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}`
       },
-      body: JSON.stringify(webhookData)
+      body: JSON.stringify({
+        damageType: DAMAGE_TO_SEARCH_QUERY[damageType],
+        location,
+        reportId
+      })
     });
 
     if (!response.ok) {
-      console.error(`[GoHighLevel] Webhook call failed with status ${response.status}:`, await response.text());
-      throw new Error('Failed to send contractor lookup results to GoHighLevel');
+      const errorText = await response.text();
+      console.error(`[Contractor Search] API request failed:`, response.status, errorText);
+      throw new Error(`Failed to initiate contractor search: ${response.status} ${errorText}`);
     }
-    console.log(`[GoHighLevel] Successfully sent contractor results for report ${reportId}`);
+
+    const { success, searchId, error } = await response.json();
+    
+    if (!success) {
+      console.error(`[Contractor Search] Edge function error:`, error);
+      return;
+    }
+
+    console.log(`[Contractor Search] Successfully initiated search ${searchId} for ${damageType}`);
   } catch (error) {
-    console.error('[GoHighLevel] Error sending contractor lookup results:', error);
+    console.error(`[Contractor Search] Error initiating search for ${damageType}:`, error);
   }
 }
 
 /**
  * Stores report data in Supabase database
- * In a production environment, this would likely store to a database instead
  */
 export async function storeReportData(reportData: any): Promise<void> {
   try {
@@ -311,33 +180,49 @@ export async function storeReportData(reportData: any): Promise<void> {
 
     console.log(`[Contractor Search] Found damaged components:`, damagedComponents);
 
-    // Only fetch contractors for damaged components
-    const contractorPromises = damagedComponents.map(async (component) => {
-      console.log(`[Contractor Search] Looking up contractors for damaged component: ${component}`);
-      const contractors = await getContractorsForDamage(component, reportData.address);
-      return { [component]: contractors };
-    });
+    // Initialize contractor search status
+    const contractorSearchStatus = damagedComponents.reduce((acc, component) => {
+      acc[component] = { status: 'pending', timestamp };
+      return acc;
+    }, {} as Record<string, { status: string; timestamp: string }>);
 
-    const contractorResults = await Promise.all(contractorPromises);
-    const potentialContractors = Object.assign({}, ...contractorResults);
+    // Store report data in Supabase database first
+    const { error } = await supabase
+      .from('damage_reports')
+      .insert({
+        report_id: reportId,
+        property_type: reportData.propertyType,
+        first_name: reportData.firstName,
+        last_name: reportData.lastName,
+        email: reportData.email,
+        phone_number: reportData.phoneNumber,
+        sms_consent: reportData.smsConsent,
+        address: reportData.address,
+        damage_date: reportData.damageDate,
+        damage_assessment: reportData.damageAssessment,
+        insurance_claim: reportData.insuranceClaim,
+        contact_consent: reportData.contactConsent,
+        image_urls: [],  // Will update these after contractor search is initiated
+        receipt_urls: [],
+        storm_reports: reportData.stormReports,
+        contractor_search_status: contractorSearchStatus,
+        created_at: timestamp,
+        owner_id: user?.id || null
+      });
 
-    // Store potential contractors in separate table
-    await storePotentialContractors(reportId, potentialContractors);
+    if (error) {
+      console.error('Supabase storage error:', error);
+      throw error;
+    }
 
-    // Send contractor lookup results to GoHighLevel
-    await sendContractorLookupToGoHighLevel(reportId, potentialContractors);
+    // Initiate contractor searches in parallel
+    await Promise.all(
+      damagedComponents.map(component => 
+        initiateContractorSearch(component, reportData.address, reportId)
+      )
+    );
 
-    // Ensure storm reports are properly formatted for JSON storage
-    const formattedStormReports = reportData.stormReports.map((report: any) => ({
-      type: report.type,
-      date: report.date,
-      lat: report.lat,
-      lon: report.lon,
-      distance: report.distance,
-      description: report.description
-    }));
-
-    // Upload images to Supabase Storage
+    // Now handle file uploads
     const imageUrls = await Promise.all(
       reportData.images.map(async (image: File) => {
         const fileName = `${reportId}/images/${image.name}`;
@@ -347,7 +232,6 @@ export async function storeReportData(reportData: any): Promise<void> {
         
         if (error) throw error;
         
-        // Get public URL for the uploaded file
         const { data: { publicUrl } } = supabase.storage
           .from('damage-reports')
           .getPublicUrl(fileName);
@@ -356,7 +240,6 @@ export async function storeReportData(reportData: any): Promise<void> {
       })
     );
 
-    // Upload receipts to Supabase Storage
     const receiptUrls = await Promise.all(
       reportData.receipts.map(async (receipt: File) => {
         const fileName = `${reportId}/receipts/${receipt.name}`;
@@ -374,33 +257,20 @@ export async function storeReportData(reportData: any): Promise<void> {
       })
     );
 
-    // Store report data in Supabase database (removed recommended_contractors from here)
-    const { error } = await supabase
+    // Update the report with file URLs
+    const { error: updateError } = await supabase
       .from('damage_reports')
-      .insert({
-        report_id: reportId,
-        property_type: reportData.propertyType,
-        first_name: reportData.firstName,
-        last_name: reportData.lastName,
-        email: reportData.email,
-        phone_number: reportData.phoneNumber,
-        sms_consent: reportData.smsConsent,
-        address: reportData.address,
-        damage_date: reportData.damageDate,
-        damage_assessment: reportData.damageAssessment,
-        insurance_claim: reportData.insuranceClaim,
-        contact_consent: reportData.contactConsent,
+      .update({
         image_urls: imageUrls,
-        receipt_urls: receiptUrls,
-        storm_reports: formattedStormReports,
-        created_at: timestamp,
-        owner_id: user?.id || null
-      });
+        receipt_urls: receiptUrls
+      })
+      .eq('report_id', reportId);
 
-    if (error) {
-      console.error('Supabase storage error:', error);
-      throw error;
+    if (updateError) {
+      console.error('Error updating report with file URLs:', updateError);
+      throw updateError;
     }
+
   } catch (error) {
     console.error('Error storing report data:', error);
     throw error;
