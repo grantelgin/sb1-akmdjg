@@ -10,6 +10,20 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Only allow POST method
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: `Method ${req.method} not allowed. Only POST requests are accepted.`
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 405
+      }
+    );
+  }
+
   try {
     const { damageType, location, reportId } = await req.json();
     const outscraperApiKey = Deno.env.get('OUTSCRAPER_API_KEY');
@@ -29,10 +43,12 @@ serve(async (req) => {
 
     // Construct webhook URL for this search
     const webhookUrl = `${baseUrl}/functions/v1/outscraper-webhook`;
+    console.log('Webhook URL:', webhookUrl);
     
     // Start with smallest radius
     const radius = SEARCH_RADIUS_INCREMENTS[0];
     const searchQuery = `${damageType} contractors near ${location} within ${radius} miles`;
+    console.log('Search query:', searchQuery);
     
     // Initialize or update the search status in damage_reports
     const { data: report, error: reportError } = await supabaseClient
@@ -61,42 +77,65 @@ serve(async (req) => {
     }
 
     // Start the Outscraper search with webhook
-    const response = await fetch('https://api.outscraper.com/maps/search-async', {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': outscraperApiKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query: searchQuery,
-        limit: 20,
-        language: 'en',
-        region: 'us',
-        webhook_url: webhookUrl,
-        webhook_data: {
-          reportId,
-          damageType
+    const encodedQuery = encodeURIComponent(searchQuery);
+    const encodedWebhook = encodeURIComponent(webhookUrl);
+    const searchUrl = `https://api.app.outscraper.com/maps/search-v3?query=${encodedQuery}&webhook=${encodedWebhook}`;
+
+    console.log('Making API request to:', searchUrl);
+
+    try {
+      const response = await fetch(searchUrl, {
+        method: 'GET',
+        headers: {
+          'X-API-KEY': outscraperApiKey,
+          'Accept': 'application/json'
         }
-      })
-    });
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API request failed: ${response.status} ${errorText}`);
-      throw new Error(`Failed to start contractor search: ${errorText}`);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status} ${responseText}`);
+      }
+
+      const data = JSON.parse(responseText);
+      console.log('Parsed response:', JSON.stringify(data, null, 2));
+
+      // Update the search status with Outscraper request details
+      currentStatus[damageType] = {
+        status: 'searching',
+        timestamp: new Date().toISOString(),
+        outscraper_request_id: data.id,
+        results_location: data.results_location
+      };
+
+      const { error: finalUpdateError } = await supabaseClient
+        .from('damage_reports')
+        .update({ contractor_search_status: currentStatus })
+        .eq('report_id', reportId);
+
+      if (finalUpdateError) {
+        throw finalUpdateError;
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Contractor search initiated',
+          searchId: data.id,
+          resultsLocation: data.results_location
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (fetchError) {
+      console.error('Fetch error:', fetchError);
+      throw fetchError;
     }
-
-    const { search_id } = await response.json();
-    console.log(`Initiated Outscraper search ${search_id} for ${damageType}`);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Contractor search initiated',
-        searchId: search_id
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error:', error);

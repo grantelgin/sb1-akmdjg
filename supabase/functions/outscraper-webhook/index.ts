@@ -58,19 +58,86 @@ serve(async (req) => {
 
     // Update the status for this damage type
     const currentStatus = report.contractor_search_status || {};
-    currentStatus[damageType] = {
-      status: 'completed',
-      count: enrichedContractors.length,
-      timestamp
-    };
+    const searchStatus = currentStatus[damageType];
 
-    const { error: updateError } = await supabaseClient
-      .from('damage_reports')
-      .update({ contractor_search_status: currentStatus })
-      .eq('report_id', reportId);
+    // If no contractors were found in the webhook data, try fetching from results_location
+    if (!contractors || contractors.length === 0) {
+      console.log(`[Outscraper Webhook] No contractors in webhook data, checking results location for ${reportId}`);
+      
+      if (searchStatus?.results_location) {
+        try {
+          const resultsResponse = await fetch(searchStatus.results_location, {
+            headers: {
+              'X-API-KEY': Deno.env.get('OUTSCRAPER_API_KEY') ?? '',
+              'Accept': 'application/json'
+            }
+          });
 
-    if (updateError) {
-      throw updateError;
+          if (resultsResponse.ok) {
+            const resultsData = await resultsResponse.json();
+            if (resultsData.data && resultsData.data.length > 0) {
+              contractors = resultsData.data;
+              console.log(`[Outscraper Webhook] Found ${contractors.length} contractors from results location`);
+            }
+          }
+        } catch (error) {
+          console.error('[Outscraper Webhook] Error fetching results:', error);
+        }
+      }
+    }
+
+    // Proceed only if we have contractors
+    if (!contractors || contractors.length === 0) {
+      console.log(`[Outscraper Webhook] No contractors found for ${damageType} in report ${reportId}`);
+      currentStatus[damageType] = {
+        ...searchStatus,
+        status: 'completed',
+        count: 0,
+        timestamp: new Date().toISOString()
+      };
+    } else {
+      // Store the contractors in the database
+      const timestamp = new Date().toISOString();
+      const enrichedContractors = contractors.map((contractor: any) => ({
+        ...contractor,
+        validationStatus: 'pending',
+        rrn_member: false
+      }));
+
+      // Store in potential_contractors table
+      const { error: dbError } = await supabaseClient
+        .from('potential_contractors')
+        .insert(
+          enrichedContractors.map((contractor: any) => ({
+            report_id: reportId,
+            damage_type: damageType,
+            contractor_data: contractor,
+            search_radius: contractor.searchRadius,
+            validation_status: contractor.validationStatus,
+            rrn_member: contractor.rrn_member,
+            created_at: timestamp
+          }))
+        );
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      // Update the status for this damage type
+      currentStatus[damageType] = {
+        status: 'completed',
+        count: enrichedContractors.length,
+        timestamp
+      };
+
+      const { error: updateError } = await supabaseClient
+        .from('damage_reports')
+        .update({ contractor_search_status: currentStatus })
+        .eq('report_id', reportId);
+
+      if (updateError) {
+        throw updateError;
+      }
     }
 
     // If all damage types are complete, send to GoHighLevel
