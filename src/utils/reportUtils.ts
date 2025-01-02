@@ -105,17 +105,29 @@ async function initiateContractorSearch(damageType: string, location: string, re
   try {
     console.log(`[Contractor Search] Initiating search for ${damageType} damage near ${location}`);
     
-    const response = await fetch('/functions/v1/contractor-lookup', {
-      method: 'POST',
+    // Construct the search query with initial radius
+    const radius = SEARCH_RADIUS_INCREMENTS[0];
+    const searchQuery = `${DAMAGE_TO_SEARCH_QUERY[damageType]} near ${location} within ${radius} miles`;
+    
+    // Construct webhook URL using Supabase URL
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const webhookUrl = `${supabaseUrl}/functions/v1/outscraper-webhook`;
+    
+    // Encode parameters
+    const encodedQuery = encodeURIComponent(searchQuery);
+    const encodedWebhook = encodeURIComponent(webhookUrl);
+    
+    // Construct Outscraper API URL with webhook
+    const outscraperUrl = `https://api.app.outscraper.com/maps/search-v3?query=${encodedQuery}&webhook=${encodedWebhook}&async=true`;
+    
+    console.log('[Contractor Search] Making request to Outscraper:', outscraperUrl);
+    
+    const response = await fetch(outscraperUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-      },
-      body: JSON.stringify({
-        damageType: DAMAGE_TO_SEARCH_QUERY[damageType],
-        location,
-        reportId
-      })
+        'X-API-KEY': import.meta.env.VITE_OUTSCRAPER_API_KEY,
+        'Accept': 'application/json'
+      }
     });
 
     if (!response.ok) {
@@ -124,16 +136,44 @@ async function initiateContractorSearch(damageType: string, location: string, re
       throw new Error(`Failed to initiate contractor search: ${response.status} ${errorText}`);
     }
 
-    const { success, searchId, error } = await response.json();
+    const data = await response.json();
+    console.log(`[Contractor Search] Successfully initiated search ${data.id} for ${damageType}`);
     
-    if (!success) {
-      console.error(`[Contractor Search] Edge function error:`, error);
-      return;
+    // Update the search status to indicate search is in progress
+    const { error: updateError } = await supabase
+      .from('damage_reports')
+      .update({
+        [`contractor_search_status.${damageType}`]: {
+          status: 'searching',
+          timestamp: new Date().toISOString(),
+          search_id: data.id,
+          search_radius: radius
+        }
+      })
+      .eq('report_id', reportId);
+
+    if (updateError) {
+      console.error(`[Contractor Search] Error updating search status:`, updateError);
     }
 
-    console.log(`[Contractor Search] Successfully initiated search ${searchId} for ${damageType}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error(`[Contractor Search] Error initiating search for ${damageType}:`, error);
+    
+    // Update the search status to indicate failure
+    const { error: updateError } = await supabase
+      .from('damage_reports')
+      .update({
+        [`contractor_search_status.${damageType}`]: {
+          status: 'failed',
+          timestamp: new Date().toISOString(),
+          error: error.message
+        }
+      })
+      .eq('report_id', reportId);
+
+    if (updateError) {
+      console.error(`[Contractor Search] Error updating failure status:`, updateError);
+    }
   }
 }
 

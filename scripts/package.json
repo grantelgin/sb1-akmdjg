@@ -1,0 +1,8 @@
+{
+  "name": "storm-reports-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "process": "node --loader ts-node/esm process-storm-reports.ts"
+  }
+} 

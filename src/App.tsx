@@ -28,6 +28,7 @@ import Login from './components/auth/Login';
 import SignUp from './components/auth/SignUp';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import StormReportsList from './components/StormReports/StormReportsList';
 
 
 const initialFormData: FormData = {
@@ -140,6 +141,7 @@ function App() {
           <Route path="/guides" element={<GuidesCollection />} />
           <Route path="/guides/:slug" element={<GuideDetail />} />
           <Route path="/report/:reportId" element={<DamageAssessmentReport />} />
+          <Route path="/storm-reports" element={<StormReportsList />} />
           <Route path="/supabase-test" element={<SupabaseTest />} />
           <Route path="/stormreport-test" element={<StormReportsTest />} />
           <Route path="/professionals" element={<RestoProfessionals />} />
